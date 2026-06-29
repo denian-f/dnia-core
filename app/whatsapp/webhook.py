@@ -23,6 +23,18 @@ async def receive_webhook(request: Request):
 
     data = await request.json()
 
-    print(data)
+    try:
+        message = (
+            data["entry"][0]
+            ["changes"][0]
+            ["value"]
+            ["messages"][0]
+        )
+
+        print("\nNova mensagem recebida!\n")
+        print(message)
+
+    except (KeyError, IndexError):
+        print("\nEvento recebido, mas não é uma mensagem.\n")
 
     return {"status": "received"}
