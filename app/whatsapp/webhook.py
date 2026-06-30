@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 
 from app.config import VERIFY_TOKEN
+from app.whatsapp.parser import parse_message
 
 router = APIRouter()
 
@@ -23,8 +24,16 @@ async def receive_webhook(request: Request):
 
     data = await request.json()
 
-    print("\n========== JSON RECEBIDO ==========\n")
-    print(data)
-    print("\n==================================\n")
+    message = parse_message(data)
+
+    if message:
+        print("\n========== NOVA MENSAGEM ==========\n")
+        print(f"Nome: {message['nome']}")
+        print(f"Telefone: {message['telefone']}")
+        print(f"Mensagem: {message['mensagem']}")
+        print(f"Tipo: {message['tipo']}")
+        print("===================================\n")
+    else:
+        print("Evento recebido, mas não é uma mensagem.")
 
     return {"status": "received"}
