@@ -3,6 +3,7 @@ from fastapi.responses import PlainTextResponse
 
 from app.config import VERIFY_TOKEN
 from app.whatsapp.parser import parse_message
+from app.whatsapp.sender import send_text_message
 
 router = APIRouter()
 
@@ -31,8 +32,13 @@ async def receive_webhook(request: Request):
         print(f"Nome: {message['nome']}")
         print(f"Telefone: {message['telefone']}")
         print(f"Mensagem: {message['mensagem']}")
+        send_text_message(
+            to=message["telefone"],
+            message="Olá! Recebi sua mensagem com sucesso. 🚀"
+        )
         print(f"Tipo: {message['tipo']}")
         print("===================================\n")
+        
     else:
         print("Evento recebido, mas não é uma mensagem.")
 
