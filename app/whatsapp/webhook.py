@@ -5,6 +5,7 @@ from app.config import VERIFY_TOKEN
 from app.whatsapp.parser import parse_message
 from app.whatsapp.sender import send_text_message
 from app.services.assistant import chat
+from app.services.router import route_message
 
 router = APIRouter()
 
@@ -28,6 +29,11 @@ async def receive_webhook(request: Request):
 
     message = parse_message(data)
 
+    route = route_message(
+        phone=message["telefone"],
+        message=message["mensagem"]
+    )
+
     if message:
 
         print("\n========== NOVA MENSAGEM ==========\n")
@@ -37,7 +43,27 @@ async def receive_webhook(request: Request):
         print(f"Tipo: {message['tipo']}")
         print("===================================\n")
 
-        resposta = chat(message["mensagem"])
+        if not route["protected"]:
+
+            resposta = chat(message["mensagem"])
+
+        elif not route["authenticated"]:
+
+            resposta = (
+                "🔒 Você não possui autorização para acessar esse recurso."
+            )
+
+        elif route["requires_password"]:
+
+            resposta = (
+                "🔑 Área protegida.\n\n"
+                "Digite sua senha para continuar."
+            )
+
+        else:
+
+            resposta = chat(message["mensagem"])
+
 
         send_text_message(
             to=message["telefone"],
