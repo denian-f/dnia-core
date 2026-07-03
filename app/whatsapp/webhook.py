@@ -7,7 +7,14 @@ from app.whatsapp.sender import send_text_message
 from app.services.assistant import chat
 from app.services.router import route_message
 
+from app.state.manager import (
+    get_state,
+    set_state,
+    clear_state
+)
+
 router = APIRouter()
+
 
 
 @router.get("/webhook")
@@ -28,6 +35,26 @@ async def receive_webhook(request: Request):
     data = await request.json()
 
     message = parse_message(data)
+
+    state = get_state(message["telefone"])
+
+    if state:
+
+        if state["state"] == "WAITING_PASSWORD":
+
+            resposta = (
+                f"🔒 Recebi a senha:\n\n"
+                f"{message['mensagem']}\n\n"
+                "Ainda não vou validá-la.\n"
+                "Isso será implementado na próxima etapa."
+            )
+
+            send_text_message(
+                to=message["telefone"],
+                message=resposta
+            )
+
+            return {"status": "received"}
 
     route = route_message(
         phone=message["telefone"],
@@ -55,10 +82,15 @@ async def receive_webhook(request: Request):
 
         elif route["requires_password"]:
 
+            set_state(
+            phone=message["telefone"],
+            state="WAITING_PASSWORD"
+        )
+
             resposta = (
-                "🔑 Área protegida.\n\n"
-                "Digite sua senha para continuar."
-            )
+            "🔑 Área protegida.\n\n"
+            "Digite sua senha para continuar."
+        )
 
         else:
 
