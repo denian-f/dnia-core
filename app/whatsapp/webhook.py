@@ -7,6 +7,7 @@ from app.whatsapp.sender import send_text_message
 from app.services.assistant import chat
 from app.services.router import route_message
 from app.security.password import validate_password
+from app.security.totp import verify_totp
 
 from app.state.manager import (
     get_state,
@@ -42,6 +43,33 @@ async def receive_webhook(request: Request):
     if state:
 
         if state["state"] == "WAITING_PASSWORD":
+
+            if state:
+
+                if state["state"] == "WAITING_TOTP":
+
+                    if verify_totp(message["mensagem"]):
+
+                        clear_state(message["telefone"])
+
+                        resposta = (
+                            "✅ Código válido!\n\n"
+                            "Acesso liberado com sucesso. 🚀"
+                        )
+
+                    else:
+
+                        resposta = (
+                            "❌ Código inválido.\n\n"
+                            "Tente novamente."
+                        )
+
+                    send_text_message(
+                        to=message["telefone"],
+                        message=resposta
+                    )
+
+                    return {"status": "received"}
 
             if validate_password(message["mensagem"]):
 
