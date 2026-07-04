@@ -50,6 +50,11 @@ def route_message(phone: str, message: str) -> dict:
 
     state = get_state(phone)
 
+    print("\n===== ROUTER =====")
+    print(f"Telefone: {phone}")
+    print(f"State: {state}")
+    print("==================\n")   
+
     session_active = (
         state is not None
         and state["state"] == "AUTHENTICATED"
