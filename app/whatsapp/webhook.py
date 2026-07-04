@@ -160,9 +160,9 @@ async def receive_webhook(request: Request):
             state="WAITING_PASSWORD"
         )
 
-        resposta = (
-            "🔑 Área protegida.\n\n"
-            "Digite sua senha para continuar."
+            resposta = (
+                "🔑 Área protegida.\n\n"
+                "Digite sua senha para continuar."
         )
 
     else:

@@ -53,7 +53,8 @@ def route_message(phone: str, message: str) -> dict:
     print("\n===== ROUTER =====")
     print(f"Telefone: {phone}")
     print(f"State: {state}")
-    print("==================\n")   
+    print("==================\n") 
+    print(f"Session Active: {session_active}")  
 
     session_active = (
         state is not None
