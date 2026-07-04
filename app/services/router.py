@@ -1,4 +1,5 @@
 from app.security.auth import authenticate
+from app.state.manager import get_state
 
 
 PROTECTED_COMMANDS = [
@@ -29,26 +30,36 @@ def is_protected_command(message: str) -> bool:
 
 def route_message(phone: str, message: str) -> dict:
     """
-    Decide se a mensagem precisa de autenticação.
-
-    Retorna um dicionário contendo as informações para o fluxo do DNIA Core.
+    Decide como a mensagem deve ser tratada.
     """
 
     protected = is_protected_command(message)
 
     if not protected:
+
         return {
             "protected": False,
             "authenticated": True,
-            "role": None
+            "session_active": False,
+            "role": None,
+            "requires_password": False,
+            "requires_totp": False,
         }
 
     auth = authenticate(phone)
 
+    state = get_state(phone)
+
+    session_active = (
+        state is not None
+        and state["state"] == "AUTHENTICATED"
+    )
+
     return {
         "protected": True,
         "authenticated": auth["authenticated"],
+        "session_active": session_active,
         "role": auth["role"],
         "requires_password": auth["requires_password"],
-        "requires_totp": auth["requires_totp"]
+        "requires_totp": auth["requires_totp"],
     }

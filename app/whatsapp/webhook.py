@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 
@@ -94,11 +96,15 @@ async def receive_webhook(request: Request):
 
             if verify_totp(message["mensagem"]):
 
-                clear_state(message["telefone"])
+                set_state(
+                    phone=message["telefone"],
+                    state="AUTHENTICATED",
+                    duration=timedelta(minutes=30)
+                )
 
                 resposta = (
                     "✅ Código válido!\n\n"
-                    "Acesso liberado com sucesso. 🚀"
+                    "Sessão autenticada por 30 minutos. 🚀"
                 )
 
             else:
@@ -143,7 +149,13 @@ async def receive_webhook(request: Request):
 
     elif route["requires_password"]:
 
-        set_state(
+        if route["session_active"]:
+
+            resposta = chat(message["mensagem"])
+
+        else:
+
+            set_state(
             phone=message["telefone"],
             state="WAITING_PASSWORD"
         )

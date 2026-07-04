@@ -1,24 +1,40 @@
 from datetime import datetime, timedelta
 
-# Armazena o estado das conversas em memória
+# Armazena os estados das conversas em memória
 conversation_states = {}
 
+# Duração padrão dos estados
+DEFAULT_DURATION = timedelta(minutes=5)
 
-def set_state(phone: str, state: str, data: dict | None = None):
+
+def set_state(
+    phone: str,
+    state: str,
+    data: dict | None = None,
+    duration: timedelta | None = None
+):
     """
     Define o estado atual de um usuário.
+
+    Args:
+        phone: Número do usuário.
+        state: Nome do estado.
+        data: Dados extras do estado.
+        duration: Tempo de duração do estado.
     """
 
     conversation_states[phone] = {
         "state": state,
         "data": data or {},
-        "created_at": datetime.now()
+        "created_at": datetime.now(),
+        "duration": duration or DEFAULT_DURATION
     }
 
 
 def get_state(phone: str):
     """
     Retorna o estado atual do usuário.
+    Remove automaticamente estados expirados.
     """
 
     state = conversation_states.get(phone)
@@ -26,10 +42,9 @@ def get_state(phone: str):
     if not state:
         return None
 
-    # Expira automaticamente após 5 minutos
-    if datetime.now() - state["created_at"] > timedelta(minutes=5):
+    if datetime.now() - state["created_at"] > state["duration"]:
 
-        conversation_states.pop(phone)
+        conversation_states.pop(phone, None)
 
         return None
 
