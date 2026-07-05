@@ -99,12 +99,12 @@ async def receive_webhook(request: Request):
                 set_state(
                     phone=message["telefone"],
                     state="AUTHENTICATED",
-                    duration=timedelta(minutes=30)
+                    duration=timedelta(minutes=2)
                 )
 
                 resposta = (
                     "✅ Código válido!\n\n"
-                    "Sessão autenticada por 30 minutos. 🚀"
+                    "Sessão autenticada por 2 minutos. 🚀"
                 )
 
             else:
