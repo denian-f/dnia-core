@@ -13,6 +13,8 @@ from app.services.router import route_message
 from app.security.password import validate_password
 from app.security.totp import verify_totp
 
+from app.services.menu import get_main_menu
+
 from app.state.manager import (
     get_state,
     set_state,
@@ -97,26 +99,26 @@ async def receive_webhook(request: Request):
             if verify_totp(message["mensagem"]):
 
                 set_state(
-                    phone=message["telefone"],
-                    state="AUTHENTICATED",
-                    duration=timedelta(minutes=2)
-                )
+                phone=message["telefone"],
+                state="AUTHENTICATED",
+                duration=timedelta(minutes=2)
+            )
 
-                resposta = (
-                    "✅ Código válido!\n\n"
-                    "Sessão autenticada por 2 minutos. 🚀"
-                )
+            resposta = (
+                "✅ Código válido!\n\n"
+                "Sessão autenticada por 2 minutos. 🚀"
+            )
 
-            else:
-
-                resposta = (
-                    "❌ Código inválido.\n\n"
-                    "Tente novamente."
-                )
-
+            # Primeira mensagem
             send_text_message(
                 to=message["telefone"],
                 message=resposta
+            )
+
+            # Segunda mensagem (menu)
+            send_text_message(
+                to=message["telefone"],
+                message=get_main_menu()
             )
 
             return {"status": "received"}
