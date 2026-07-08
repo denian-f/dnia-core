@@ -42,9 +42,16 @@ def route_message(phone: str, message: str) -> dict:
 
     state = get_state(phone)
 
+    # =====================================
+    # Sessão autenticada
+    # =====================================
+
     session_active = (
         state is not None
-        and state["state"] == "AUTHENTICATED"
+        and state["state"] in [
+            "WAITING_MENU_OPTION",
+            "WAITING_CATALOG_CITY",
+        ]
     )
 
     print("\n===== ROUTER =====")

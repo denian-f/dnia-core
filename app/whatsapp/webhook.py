@@ -14,6 +14,7 @@ from app.security.password import validate_password
 from app.security.totp import verify_totp
 
 from app.services.menu import get_main_menu
+from app.services.dispatcher import dispatch
 
 from app.state.manager import (
     get_state,
@@ -99,27 +100,40 @@ async def receive_webhook(request: Request):
             if verify_totp(message["mensagem"]):
 
                 set_state(
-                phone=message["telefone"],
-                state="AUTHENTICATED",
-                duration=timedelta(minutes=2)
-            )
+                    phone=message["telefone"],
+                    state="WAITING_MENU_OPTION",
+                    data={
+                        "authenticated": True
+                    },
+                    duration=timedelta(minutes=2)
+                )
 
-            resposta = (
-                "✅ Código válido!\n\n"
-                "Sessão autenticada por 2 minutos. 🚀"
-            )
+                resposta = (
+                    "✅ Código válido!\n\n"
+                    "Sessão autenticada por 2 minutos. 🚀"
+                )
 
-            # Primeira mensagem
-            send_text_message(
-                to=message["telefone"],
-                message=resposta
-            )
+                send_text_message(
+                    to=message["telefone"],
+                    message=resposta
+                )
 
-            # Segunda mensagem (menu)
-            send_text_message(
-                to=message["telefone"],
-                message=get_main_menu()
-            )
+                send_text_message(
+                    to=message["telefone"],
+                    message=get_main_menu()
+                )
+
+            else:
+
+                resposta = (
+                    "❌ Código inválido.\n\n"
+                    "Tente novamente."
+                )
+
+                send_text_message(
+                    to=message["telefone"],
+                    message=resposta
+                )
 
             return {"status": "received"}
 
@@ -153,8 +167,10 @@ async def receive_webhook(request: Request):
 
         if route["session_active"]:
 
-            resposta = chat(message["mensagem"])
-
+            resposta = dispatch(
+                phone=message["telefone"],
+                message=message["mensagem"]
+            )
         else:
 
             set_state(
