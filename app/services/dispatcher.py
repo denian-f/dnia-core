@@ -9,10 +9,9 @@ def dispatch(phone: str, message: str):
 
     state = get_state(phone)
 
-    # ==========================
-    # Usuário já está usando o
-    # módulo de Catálogos
-    # ==========================
+    # ==========================================
+    # Usuário já está dentro do módulo Catálogos
+    # ==========================================
 
     if state and state["state"] == "WAITING_CATALOG_CITY":
 
@@ -21,23 +20,31 @@ def dispatch(phone: str, message: str):
             message=message
         )
 
-    # ==========================
+    # ==========================================
     # Menu principal
-    # ==========================
+    # ==========================================
 
     message = message.strip()
-
 
     if state and state["state"] == "WAITING_MENU_OPTION":
 
         if message == "1":
 
             return catalog_service(
-                phone,
-                message
+                phone=phone,
+                message=""
             )
 
         return (
             "❌ Opção inválida.\n\n"
-            "Escolha uma opção do menu."
+            "Escolha uma opção válida do menu."
         )
+
+    # ==========================================
+    # Nenhum fluxo ativo
+    # ==========================================
+
+    return (
+        "❌ Nenhum serviço ativo.\n\n"
+        "Digite *Serviços DNIA* para acessar o menu."
+    )

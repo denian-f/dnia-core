@@ -9,12 +9,11 @@ from app.whatsapp.sender import send_text_message
 
 from app.services.assistant import chat
 from app.services.router import route_message
+from app.services.menu import get_main_menu
+from app.services.dispatcher import dispatch
 
 from app.security.password import validate_password
 from app.security.totp import verify_totp
-
-from app.services.menu import get_main_menu
-from app.services.dispatcher import dispatch
 
 from app.state.manager import (
     get_state,
@@ -52,16 +51,33 @@ async def receive_webhook(request: Request):
     state = get_state(message["telefone"])
 
     # ==================================================
+    # Usuário já está dentro dos serviços do DNIA Core
+    # ==================================================
+
+    if state and state["state"] in [
+        "WAITING_MENU_OPTION",
+        "WAITING_CATALOG_CITY"
+    ]:
+
+        resposta = dispatch(
+            phone=message["telefone"],
+            message=message["mensagem"]
+        )
+
+        send_text_message(
+            to=message["telefone"],
+            message=resposta
+        )
+
+        return {"status": "received"}
+
+    # ==================================================
     # Fluxos de autenticação
     # ==================================================
 
     if state:
 
         current_state = state["state"]
-
-        # -------------------------------
-        # Esperando senha
-        # -------------------------------
 
         if current_state == "WAITING_PASSWORD":
 
@@ -90,10 +106,6 @@ async def receive_webhook(request: Request):
             )
 
             return {"status": "received"}
-
-        # -------------------------------
-        # Esperando código TOTP
-        # -------------------------------
 
         elif current_state == "WAITING_TOTP":
 
@@ -165,22 +177,14 @@ async def receive_webhook(request: Request):
 
     elif route["requires_password"]:
 
-        if route["session_active"]:
-
-            resposta = dispatch(
-                phone=message["telefone"],
-                message=message["mensagem"]
-            )
-        else:
-
-            set_state(
+        set_state(
             phone=message["telefone"],
             state="WAITING_PASSWORD"
         )
 
-            resposta = (
-                "🔑 Área protegida.\n\n"
-                "Digite sua senha para continuar."
+        resposta = (
+            "🔑 Área protegida.\n\n"
+            "Digite sua senha para continuar."
         )
 
     else:
