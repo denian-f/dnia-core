@@ -23,9 +23,18 @@ def gerar_catalogo(cidade: str):
 
     background = buscar_background_por_cidade(cidade)
 
+    from app.services.catalogs.templates import render_catalog_template
+
+    html = render_catalog_template(
+    cidade=cidade,
+    produtos=produtos,
+    background=background
+)
+
     return {
         "success": True,
         "cidade": cidade,
         "background": background,
-        "produtos": produtos
+        "produtos": produtos,
+        "html": html
     }

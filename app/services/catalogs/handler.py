@@ -46,7 +46,8 @@ def handle_catalog(phone: str, message: str):
 
     return (
         "✅ Cidade encontrada!\n\n"
-        f"📍 Cidade: *{resultado['cidade']}*\n"
-        f"📦 Produtos encontrados: *{quantidade}*\n\n"
+        f"📍 Cidade: {resultado['cidade']}\n"
+        f"📦 Produtos encontrados: {quantidade}\n"
+        f"📝 HTML gerado: {len(resultado['html'])} caracteres\n\n"
         "Na próxima etapa iremos gerar o PDF."
     )
