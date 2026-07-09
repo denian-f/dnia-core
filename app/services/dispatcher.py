@@ -1,5 +1,5 @@
 from app.state.manager import get_state
-from app.services.catalogs.service import catalog_service
+from app.services.catalogs.handler import handle_catalog
 
 
 def dispatch(phone: str, message: str):
@@ -15,7 +15,7 @@ def dispatch(phone: str, message: str):
 
     if state and state["state"] == "WAITING_CATALOG_CITY":
 
-        return catalog_service(
+        return handle_catalog(
             phone=phone,
             message=message
         )
@@ -30,7 +30,7 @@ def dispatch(phone: str, message: str):
 
         if message == "1":
 
-            return catalog_service(
+            return handle_catalog(
                 phone=phone,
                 message=""
             )

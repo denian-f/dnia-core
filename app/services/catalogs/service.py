@@ -1,20 +1,7 @@
-from app.services.catalogs.handler import handle_catalog
-
 from app.services.catalogs.airtable import (
     buscar_produtos_por_cidade,
     buscar_background_por_cidade
 )
-
-
-def catalog_service(phone: str, message: str):
-    """
-    Serviço principal do módulo de catálogos.
-    """
-
-    return handle_catalog(
-        phone=phone,
-        message=message
-    )
 
 
 def gerar_catalogo(cidade: str):
@@ -37,13 +24,8 @@ def gerar_catalogo(cidade: str):
     background = buscar_background_por_cidade(cidade)
 
     return {
-
         "success": True,
-
         "cidade": cidade,
-
         "background": background,
-
         "produtos": produtos
-
     }
