@@ -3,6 +3,7 @@ from app.services.catalogs.airtable import (
     buscar_background_por_cidade
 )
 
+from app.services.catalogs.pdf import gerar_pdf
 
 def gerar_catalogo(cidade: str):
     """
@@ -30,11 +31,16 @@ def gerar_catalogo(cidade: str):
     produtos=produtos,
     background=background
 )
+    pdf = gerar_pdf(
+    html=html,
+    cidade=cidade
+)
 
     return {
-        "success": True,
-        "cidade": cidade,
-        "background": background,
-        "produtos": produtos,
-        "html": html
-    }
+    "success": True,
+    "cidade": cidade,
+    "background": background,
+    "produtos": produtos,
+    "html": html,
+    "pdf": pdf
+}

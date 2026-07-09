@@ -42,12 +42,20 @@ def handle_catalog(phone: str, message: str):
 
         return resultado["message"]
 
+    pdf_path = resultado["pdf"]
+
+    if not pdf_path.exists():
+
+        return (
+            "❌ O PDF não foi gerado."
+        )
+
     quantidade = len(resultado["produtos"])
 
     return (
-        "✅ Cidade encontrada!\n\n"
+        "✅ Catálogo gerado!\n\n"
         f"📍 Cidade: {resultado['cidade']}\n"
         f"📦 Produtos encontrados: {quantidade}\n"
-        f"📝 HTML gerado: {len(resultado['html'])} caracteres\n\n"
-        "Na próxima etapa iremos gerar o PDF."
+        f"📄 PDF criado com sucesso!\n\n"
+        f"Arquivo:\n{pdf_path}"
     )
