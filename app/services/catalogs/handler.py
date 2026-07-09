@@ -3,6 +3,7 @@ from app.state.manager import get_state, set_state
 from app.services.catalogs.states import WAITING_CITY
 from app.services.catalogs.service import gerar_catalogo
 
+from app.whatsapp.sender_document import upload_document
 
 def handle_catalog(phone: str, message: str):
     """
@@ -50,12 +51,11 @@ def handle_catalog(phone: str, message: str):
             "❌ O PDF não foi gerado."
         )
 
-    quantidade = len(resultado["produtos"])
+    media_id = upload_document(
+        str(pdf_path)
+    )
 
     return (
-        "✅ Catálogo gerado!\n\n"
-        f"📍 Cidade: {resultado['cidade']}\n"
-        f"📦 Produtos encontrados: {quantidade}\n"
-        f"📄 PDF criado com sucesso!\n\n"
-        f"Arquivo:\n{pdf_path}"
+        "✅ Upload realizado com sucesso!\n\n"
+        f"Media ID:\n{media_id}"
     )
