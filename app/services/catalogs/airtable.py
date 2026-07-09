@@ -10,6 +10,8 @@ TABLE_IMAGES = "Imagens"
 
 def buscar_produtos_por_cidade(cidade: str):
 
+    cidade = cidade.strip().upper()
+
     url = (
         f"https://api.airtable.com/v0/"
         f"{AIRTABLE_BASE_ID}/{TABLE_PRODUCTS}"
@@ -20,7 +22,9 @@ def buscar_produtos_por_cidade(cidade: str):
     }
 
     params = {
-        "filterByFormula": f"{{cidade}} = '{cidade}'"
+        "filterByFormula": (
+            f"UPPER({{cidade}}) = '{cidade}'"
+        )
     }
 
     produtos = []
