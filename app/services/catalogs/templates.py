@@ -145,7 +145,7 @@ body {
   <!-- 🔥 LINHA 1 -->
 
   {% if pagina.p1_img %}
-  <div class="produto" style="top: 178px; left: 12%;">
+  <div class="produto" style="top: 178px; left: 16%;">
     <div class="imagem-container">
       <img src="{{ pagina.p1_img }}">
     </div>
@@ -156,7 +156,7 @@ body {
   {% endif %}
 
   {% if pagina.p2_img %}
-  <div class="produto" style="top: 178px; left: 39%;">
+  <div class="produto" style="top: 178px; left: 50%;">
     <div class="imagem-container">
       <img src="{{ pagina.p2_img }}">
     </div>
@@ -167,7 +167,7 @@ body {
   {% endif %}
 
   {% if pagina.p3_img %}
-  <div class="produto" style="top: 178px; left: 66%;">
+  <div class="produto" style="top: 178px; left: 84%;">
     <div class="imagem-container">
       <img src="{{ pagina.p3_img }}">
     </div>
@@ -180,7 +180,7 @@ body {
   <!-- 🔥 LINHA 2 -->
 
   {% if pagina.p4_img %}
-  <div class="produto" style="top: 493px; left: 12%;">
+  <div class="produto" style="top: 493px; left: 16%;">
     <div class="imagem-container">
       <img src="{{ pagina.p4_img }}">
     </div>
@@ -191,7 +191,7 @@ body {
   {% endif %}
 
   {% if pagina.p5_img %}
-  <div class="produto" style="top: 493px; left: 39%;">
+  <div class="produto" style="top: 493px; left: 50%;">
     <div class="imagem-container">
       <img src="{{ pagina.p5_img }}">
     </div>
@@ -202,7 +202,7 @@ body {
   {% endif %}
 
   {% if pagina.p6_img %}
-  <div class="produto" style="top: 493px; left: 66%;">
+  <div class="produto" style="top: 493px; left: 84%;">
     <div class="imagem-container">
       <img src="{{ pagina.p6_img }}">
     </div>
@@ -215,7 +215,7 @@ body {
   <!-- 🔥 LINHA 3 -->
 
   {% if pagina.p7_img %}
-  <div class="produto" style="top: 808px; left: 12%;">
+  <div class="produto" style="top: 808px; left: 16%;">
     <div class="imagem-container">
       <img src="{{ pagina.p7_img }}">
     </div>
@@ -226,7 +226,7 @@ body {
   {% endif %}
 
   {% if pagina.p8_img %}
-  <div class="produto" style="top: 808px; left: 39%;">
+  <div class="produto" style="top: 808px; left: 50%;">
     <div class="imagem-container">
       <img src="{{ pagina.p8_img }}">
     </div>
@@ -237,7 +237,7 @@ body {
   {% endif %}
 
   {% if pagina.p9_img %}
-  <div class="produto" style="top: 808px; left: 66%;">
+  <div class="produto" style="top: 808px; left: 84%;">
     <div class="imagem-container">
       <img src="{{ pagina.p9_img }}">
     </div>
