@@ -4,6 +4,7 @@ from app.services.catalogs.airtable import (
 )
 
 from app.services.catalogs.pdf import gerar_pdf
+from app.services.catalogs.pagination import montar_paginas
 
 def gerar_catalogo(cidade: str):
     """
@@ -25,6 +26,8 @@ def gerar_catalogo(cidade: str):
     background = buscar_background_por_cidade(cidade)
 
     from app.services.catalogs.templates import render_catalog_template
+
+    paginas = montar_paginas(produtos) 
 
     html = render_catalog_template(
     cidade=cidade,
