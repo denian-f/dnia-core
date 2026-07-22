@@ -160,12 +160,12 @@ async def receive_webhook(request: Request):
                     data={
                         "authenticated": True
                     },
-                    duration=timedelta(minutes=2)
+                    duration=timedelta(hours=3)
                 )
 
                 resposta = (
                     "✅ Código válido!\n\n"
-                    "Sessão autenticada por 2 minutos. 🚀"
+                    "Sessão autenticada por 3 horas. 🚀"
                 )
 
                 send_text_message(
