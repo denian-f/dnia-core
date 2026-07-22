@@ -74,6 +74,14 @@ async def receive_webhook(request: Request):
                     message=resposta["message"]
                 )
 
+            if resposta.get("show_menu"):
+
+                from app.services.menu import enviar_menu
+
+                enviar_menu(message["telefone"])
+
+                return
+
             proximo = resposta.get("next_client")
 
             if proximo:

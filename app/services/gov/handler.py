@@ -65,6 +65,19 @@ def handle_gov(phone: str, message: str):
 
     digitos = message.strip()
 
+    if digitos.upper() == "SAIR":
+
+        clear_state(phone)
+
+        return {
+            "message": (
+                "✅ Validação GOV encerrada.\n\n"
+                "Você retornou ao menu principal."
+            ),
+            "next_client": None,
+            "show_menu": True
+        }
+    
     if len(digitos) != 2 or not digitos.isdigit():
         return (
             "❌ Valor inválido.\n\n"
