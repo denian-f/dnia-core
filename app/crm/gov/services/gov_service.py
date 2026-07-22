@@ -1,6 +1,7 @@
 from app.database.repository import PostgresRepository
 
 
+
 def proximo_cliente():
 
     repo = PostgresRepository()
@@ -20,6 +21,11 @@ def proximo_cliente():
 
 
 def iniciar_fluxo_gov(phone: str):
+
+    
+    from app.crm.gov.services.gerar_validacao import gerar_validacao
+
+    gerar_validacao()
 
     # Import local para evitar importação circular
     from app.services.gov.handler import iniciar_validacao
