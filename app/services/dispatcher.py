@@ -1,6 +1,9 @@
 from app.state.manager import get_state
+
 from app.services.catalogs.handler import handle_catalog
 from app.services.gov.handler import handle_gov
+
+from app.crm.gov.services.gov_service import iniciar_fluxo_gov
 
 
 def dispatch(phone: str, message: str):
@@ -45,6 +48,12 @@ def dispatch(phone: str, message: str):
             return handle_catalog(
                 phone=phone,
                 message=""
+            )
+
+        elif message == "2":
+
+            return iniciar_fluxo_gov(
+                phone=phone
             )
 
         return (

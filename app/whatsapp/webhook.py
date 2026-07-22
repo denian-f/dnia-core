@@ -61,16 +61,18 @@ async def receive_webhook(request: Request):
     ]:
 
         resposta = dispatch(
-            phone=message["telefone"],
-            message=message["mensagem"]
-        )
+        phone=message["telefone"],
+        message=message["mensagem"]
+    )
+
+    if resposta:
 
         send_text_message(
             to=message["telefone"],
             message=resposta
         )
 
-        return {"status": "received"}
+    return {"status": "received"}
 
     # ==================================================
     # Fluxos de autenticação
