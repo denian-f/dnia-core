@@ -77,20 +77,25 @@ def handle_gov(phone: str, message: str):
         digitos=digitos
     )
 
+    # Finaliza o estado atual
     clear_state(phone)
 
-    if not cliente:
+    # Monta a resposta para o cliente atual
+    if cliente:
 
-        return (
+        resposta = (
+            "✅ Cliente validado!\n\n"
+            f"Nome: {cliente.nome}\n"
+            f"Telefone: {cliente.telefone}"
+        )
+
+    else:
+
+        resposta = (
             "⚠️ Nenhum telefone correspondente foi encontrado."
         )
 
-    resposta = (
-        "✅ Cliente validado!\n\n"
-        f"Nome: {cliente.nome}\n"
-        f"Telefone: {cliente.telefone}"
-    )
-
+    # Busca o próximo cliente da fila
     proximo = proximo_cliente()
 
     if proximo:
