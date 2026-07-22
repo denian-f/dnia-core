@@ -5,6 +5,28 @@ from app.services.gov.handler import iniciar_validacao
 
 def iniciar_fluxo_gov(phone: str):
 
+    cliente = proximo_cliente()
+
+    if not cliente:
+
+        return (
+            "🎉 Processo concluído!\n\n"
+            "Não existem clientes pendentes."
+        )
+
+    iniciar_validacao(
+        phone=phone,
+        linha=cliente["linha"],
+        cpf=cliente["cpf"],
+        nome=cliente["nome"]
+    )
+
+    return None
+
+from app.database.repository import PostgresRepository
+
+def proximo_cliente():
+
     repo = PostgresRepository()
 
     try:
@@ -16,22 +38,6 @@ def iniciar_fluxo_gov(phone: str):
         repo.fechar()
 
     if not clientes:
+        return None
 
-        return (
-            "✅ Não existem clientes pendentes para validação."
-        )
-
-    cliente = clientes[0]
-
-    iniciar_validacao(
-        phone=phone,
-        linha=cliente["linha"],
-        cpf=cliente["cpf"],
-        nome=cliente["nome"]
-    )
-
-    # A própria função iniciar_validacao() já envia
-    # a mensagem para o WhatsApp, então não precisamos
-    # retornar nenhuma resposta ao webhook.
-
-    return None
+    return clientes[0]

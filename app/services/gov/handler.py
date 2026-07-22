@@ -9,6 +9,7 @@ from app.state.manager import (
 from app.whatsapp.sender import send_text_message
 
 from app.crm.gov.services.validacao import processar_validacao
+from app.crm.gov.services.gov_service import proximo_cliente
 
 
 def iniciar_validacao(
@@ -70,26 +71,45 @@ def handle_gov(phone: str, message: str):
             "Informe exatamente os 2 últimos dígitos."
         )
 
-    try:
+    cliente = processar_validacao(
+        linha=linha,
+        cpf=cpf,
+        digitos=digitos
+    )
 
-        cliente = processar_validacao(
-            linha=linha,
-            cpf=cpf,
-            digitos=digitos
-        )
+    clear_state(phone)
 
-        if cliente:
-
-            return (
-                "✅ Cliente validado!\n\n"
-                f"Nome: {cliente.nome}\n"
-                f"Telefone: {cliente.telefone}"
-            )
+    if not cliente:
 
         return (
             "⚠️ Nenhum telefone correspondente foi encontrado."
         )
 
-    finally:
+    resposta = (
+        "✅ Cliente validado!\n\n"
+        f"Nome: {cliente.nome}\n"
+        f"Telefone: {cliente.telefone}"
+    )
 
-        clear_state(phone)
+    proximo = proximo_cliente()
+
+    if proximo:
+
+        iniciar_validacao(
+            phone=phone,
+            linha=proximo["linha"],
+            cpf=proximo["cpf"],
+            nome=proximo["nome"]
+        )
+
+    else:
+
+        send_text_message(
+            to=phone,
+            message=(
+                "🎉 Processo concluído!\n\n"
+                "Não existem mais clientes pendentes."
+            )
+        )
+
+    return resposta
