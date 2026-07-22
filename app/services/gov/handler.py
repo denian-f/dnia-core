@@ -98,23 +98,8 @@ def handle_gov(phone: str, message: str):
     # Busca o próximo cliente da fila
     proximo = proximo_cliente()
 
-    if proximo:
 
-        iniciar_validacao(
-            phone=phone,
-            linha=proximo["linha"],
-            cpf=proximo["cpf"],
-            nome=proximo["nome"]
-        )
-
-    else:
-
-        send_text_message(
-            to=phone,
-            message=(
-                "🎉 Processo concluído!\n\n"
-                "Não existem mais clientes pendentes."
-            )
-        )
-
-    return resposta
+    return {
+        "message": resposta,
+        "next_client": proximo
+    }
