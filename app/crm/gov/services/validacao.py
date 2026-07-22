@@ -3,8 +3,48 @@ from app.database.repository import PostgresRepository
 from app.crm.gov.services.resolver_telefone import resolver_telefone
 from app.crm.gov.services.prospeccao import adicionar_prospeccao
 
+from app.config import OWNER_PHONE
+
+def processar_validacao(
+    linha,
+    cpf,
+    digitos
+):
+
+    repo = PostgresRepository()
+
+    try:
+
+        repo.salvar_validacao(
+            linha,
+            digitos
+        )
+
+        cliente = resolver_telefone(
+            repo,
+            cpf,
+            digitos
+        )
+
+        if cliente:
+
+            adicionar_prospeccao(
+                repo,
+                cliente
+            )
+
+        repo.salvar()   # <-- commit das alterações
+
+        return cliente
+
+    finally:
+
+        repo.fechar()
+
 
 def executar_validacao():
+
+    from app.services.gov.handler import iniciar_validacao
 
     repo = PostgresRepository()
 
@@ -26,6 +66,20 @@ def executar_validacao():
         print(f"Nome: {nome}")
         print(f"CPF : {cpf}")
         print("=" * 60)
+
+        ADMIN_PHONE = OWNER_PHONE
+
+        iniciar_validacao(
+            phone=ADMIN_PHONE,
+            linha=linha,
+            cpf=cpf,
+            nome=nome
+        )
+
+        print()
+        print("📲 Solicitação enviada para o WhatsApp.")
+
+        break
 
         digitos = input(
             "Digite os 2 últimos dígitos: "

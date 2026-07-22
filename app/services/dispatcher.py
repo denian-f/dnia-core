@@ -1,5 +1,6 @@
 from app.state.manager import get_state
 from app.services.catalogs.handler import handle_catalog
+from app.services.gov.handler import handle_gov
 
 
 def dispatch(phone: str, message: str):
@@ -16,6 +17,17 @@ def dispatch(phone: str, message: str):
     if state and state["state"] == "WAITING_CATALOG_CITY":
 
         return handle_catalog(
+            phone=phone,
+            message=message
+        )
+
+    # ==========================================
+    # GOV
+    # ==========================================
+
+    if state and state["state"] == "WAITING_GOV_DIGITS":
+
+        return handle_gov(
             phone=phone,
             message=message
         )

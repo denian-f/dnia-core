@@ -56,7 +56,8 @@ async def receive_webhook(request: Request):
 
     if state and state["state"] in [
         "WAITING_MENU_OPTION",
-        "WAITING_CATALOG_CITY"
+        "WAITING_CATALOG_CITY",
+        "WAITING_GOV_DIGITS"
     ]:
 
         resposta = dispatch(
