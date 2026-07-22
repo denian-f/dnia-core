@@ -65,46 +65,46 @@ async def receive_webhook(request: Request):
         message=message["mensagem"]
     )
 
-    if isinstance(resposta, dict):
+        if isinstance(resposta, dict):
 
-        if resposta.get("message"):
+            if resposta.get("message"):
 
-            send_text_message(
-                to=message["telefone"],
-                message=resposta["message"]
-            )
-
-        proximo = resposta.get("next_client")
-
-        if proximo:
-
-            from app.services.gov.handler import iniciar_validacao
-
-            iniciar_validacao(
-                phone=message["telefone"],
-                linha=proximo["linha"],
-                cpf=proximo["cpf"],
-                nome=proximo["nome"]
-            )
-
-        else:
-
-            send_text_message(
-                to=message["telefone"],
-                message=(
-                    "🎉 Processo concluído!\n\n"
-                    "Não existem mais clientes pendentes."
+                send_text_message(
+                    to=message["telefone"],
+                    message=resposta["message"]
                 )
+
+            proximo = resposta.get("next_client")
+
+            if proximo:
+
+                from app.services.gov.handler import iniciar_validacao
+
+                iniciar_validacao(
+                    phone=message["telefone"],
+                    linha=proximo["linha"],
+                    cpf=proximo["cpf"],
+                    nome=proximo["nome"]
+                )
+
+            else:
+
+                send_text_message(
+                    to=message["telefone"],
+                    message=(
+                        "🎉 Processo concluído!\n\n"
+                        "Não existem mais clientes pendentes."
+                    )
+                )
+
+        elif resposta:
+
+            send_text_message(
+                to=message["telefone"],
+                message=resposta
             )
 
-    elif resposta:
-
-        send_text_message(
-            to=message["telefone"],
-            message=resposta
-        )
-
-    return {"status": "received"}
+        return {"status": "received"}
 
     # ==================================================
     # Fluxos de autenticação
