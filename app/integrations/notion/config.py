@@ -73,26 +73,41 @@ def set_env_variable(key: str, value: str) -> None:
 
     Usado para salvar o NOTION_DATABASE_ID após a criação automática
     da Database, para que não seja recriada nas próximas execuções.
+
+    Em ambientes com sistema de arquivos efêmero (ex.: Cron Jobs do
+    Render, onde nada gravado localmente sobrevive entre execuções),
+    essa gravação é best-effort: se falhar, apenas avisamos e seguimos
+    em frente — o valor já fica disponível via os.environ para o
+    restante desta execução. Nesses ambientes, o ideal é definir
+    NOTION_DATABASE_ID e NOTION_DATA_SOURCE_ID como variáveis de
+    ambiente permanentes na própria plataforma.
     """
 
-    if not ENV_PATH.exists():
-        ENV_PATH.write_text(f"{key}={value}\n", encoding="utf-8")
-        os.environ[key] = value
-        return
-
-    conteudo = ENV_PATH.read_text(encoding="utf-8")
-    padrao = re.compile(rf"^{re.escape(key)}=.*$", flags=re.MULTILINE)
-
-    if padrao.search(conteudo):
-        novo_conteudo = padrao.sub(f"{key}={value}", conteudo)
-    else:
-        separador = "" if conteudo.endswith("\n") or conteudo == "" else "\n"
-        novo_conteudo = f"{conteudo}{separador}{key}={value}\n"
-
-    ENV_PATH.write_text(novo_conteudo, encoding="utf-8")
-
-    # Atualiza também em memória, para a execução atual enxergar o valor novo.
     os.environ[key] = value
+
+    try:
+        if not ENV_PATH.exists():
+            ENV_PATH.write_text(f"{key}={value}\n", encoding="utf-8")
+            return
+
+        conteudo = ENV_PATH.read_text(encoding="utf-8")
+        padrao = re.compile(rf"^{re.escape(key)}=.*$", flags=re.MULTILINE)
+
+        if padrao.search(conteudo):
+            novo_conteudo = padrao.sub(f"{key}={value}", conteudo)
+        else:
+            separador = "" if conteudo.endswith("\n") or conteudo == "" else "\n"
+            novo_conteudo = f"{conteudo}{separador}{key}={value}\n"
+
+        ENV_PATH.write_text(novo_conteudo, encoding="utf-8")
+
+    except OSError as erro:
+        print(
+            f"Aviso: não foi possível gravar {key} no .env ({erro}). "
+            "Isso é esperado em ambientes com sistema de arquivos efêmero "
+            "(ex.: Cron Jobs do Render). Defina essa variável manualmente "
+            "nas configurações de ambiente da plataforma para evitar recriações."
+        )
 
 
 def reload() -> None:
