@@ -474,6 +474,66 @@ class PostgresRepository:
 
         self.db.commit()
 
+    def atualizar_prospeccao(
+        self,
+        cpf,
+        status=None,
+        observacoes=None,
+        telefone_assertivo=None,
+        cidade=None,
+        uf=None,
+        categoria=None,
+        posto=None,
+        matricula=None,
+        data_primeiro_contato=None,
+    ):
+
+        # Método adicionado para suportar a sincronização Notion -> Postgres
+        # (app/integrations/notion). Usa COALESCE para nunca apagar um valor
+        # existente quando o campo vier vazio/None (ex.: propriedade ainda
+        # não preenchida no Notion), e sempre atualiza ultima_atualizacao.
+
+        cursor = self.db.cursor()
+
+        agora = datetime.now()
+
+        cursor.execute("""
+
+            UPDATE prospeccao
+
+            SET
+
+                status = COALESCE(%s, status),
+                observacoes = COALESCE(%s, observacoes),
+                telefone_assertivo = COALESCE(%s, telefone_assertivo),
+                cidade = COALESCE(%s, cidade),
+                uf = COALESCE(%s, uf),
+                categoria = COALESCE(%s, categoria),
+                posto = COALESCE(%s, posto),
+                matricula = COALESCE(%s, matricula),
+                data_primeiro_contato = COALESCE(%s, data_primeiro_contato),
+                ultima_atualizacao = %s
+
+            WHERE cpf = %s
+
+        """, (
+
+            status,
+            observacoes,
+            telefone_assertivo,
+            cidade,
+            uf,
+            categoria,
+            posto,
+            matricula,
+            data_primeiro_contato,
+            agora,
+            cpf
+
+        ))
+
+        self.db.commit()
+
     def fechar(self):
 
         self.db.close()
