@@ -226,3 +226,8 @@ __marimo__/
 .streamlit/secrets.toml
 
 collector/
+
+# HTML de clientes (dados sensiveis) - modulo CRM manual
+app/crm/manual/entrada/*.html
+app/crm/manual/processados/*.html
+app/crm/manual/erro/*.html
