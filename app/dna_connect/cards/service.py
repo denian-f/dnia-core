@@ -121,3 +121,27 @@ def listar_cartoes_por_owner(owner_id: int):
     finally:
 
         repo.fechar()
+
+
+def obter_cartao(card_code: str, owner_id: int):
+    """
+    Retorna os dados de um cartão, caso pertença ao usuário informado.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+        if not card:
+            return {"status": "not_found"}
+
+        if card.owner_id != owner_id:
+            return {"status": "forbidden"}
+
+    finally:
+
+        repo.fechar()
+
+    return {"status": "ok", "card": card}

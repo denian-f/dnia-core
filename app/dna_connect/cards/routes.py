@@ -5,7 +5,9 @@ from pydantic import BaseModel
 from app.dna_connect.cards.service import (
     resolve_target_url,
     ativar_cartao,
-    atualizar_link_cartao
+    atualizar_link_cartao,
+    listar_cartoes_por_owner,
+    obter_cartao
 )
 from app.dna_connect.auth.dependencies import get_current_user
 
@@ -93,6 +95,61 @@ def activate_card(
             "name": user.name,
             "email": user.email
         }
+    }
+
+
+@router.get("/cards")
+def list_my_cards(current_user=Depends(get_current_user)):
+    """
+    Lista os cartões pertencentes ao usuário autenticado.
+    """
+
+    cartoes = listar_cartoes_por_owner(current_user.id)
+
+    return [
+        {
+            "code": card.code,
+            "target_url": card.target_url,
+            "activated": card.activated,
+            "created_at": card.created_at,
+            "updated_at": card.updated_at
+        }
+        for card in cartoes
+    ]
+
+
+@router.get("/cards/{card_code}")
+def get_card(
+    card_code: str,
+    current_user=Depends(get_current_user)
+):
+    """
+    Retorna os detalhes de um cartão pertencente ao usuário autenticado.
+    """
+
+    resultado = obter_cartao(
+        card_code=card_code,
+        owner_id=current_user.id
+    )
+
+    if resultado["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Cartão não encontrado.")
+
+    if resultado["status"] == "forbidden":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Você não tem permissão para visualizar este cartão."
+        )
+
+    card = resultado["card"]
+
+    return {
+        "code": card.code,
+        "target_url": card.target_url,
+        "activated": card.activated,
+        "created_at": card.created_at,
+        "updated_at": card.updated_at
     }
 
 
