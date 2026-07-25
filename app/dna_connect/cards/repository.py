@@ -1,5 +1,5 @@
-from app.database.connection import Database
-from app.cards.models import Card
+from app.dna_connect.database.connection import Database
+from app.dna_connect.cards.models import Card
 
 
 class CardRepository:

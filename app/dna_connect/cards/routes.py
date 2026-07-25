@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
-from app.cards.service import resolve_target_url, ativar_cartao
+from app.dna_connect.cards.service import resolve_target_url, ativar_cartao
 
 router = APIRouter()
 

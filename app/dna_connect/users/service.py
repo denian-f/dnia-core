@@ -1,4 +1,4 @@
-from app.users.repository import UserRepository
+from app.dna_connect.users.repository import UserRepository
 from app.security.hashing import hash_password, verify_password
 
 
@@ -91,7 +91,7 @@ def listar_cartoes_do_usuario(email: str):
         return {"status": "not_found"}
 
     # Import local para evitar importação circular
-    from app.cards.service import listar_cartoes_por_owner
+    from app.dna_connect.cards.service import listar_cartoes_por_owner
 
     cartoes = listar_cartoes_por_owner(user.id)
 

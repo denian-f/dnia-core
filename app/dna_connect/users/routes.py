@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.users.service import (
+from app.dna_connect.users.service import (
     registrar_usuario,
     autenticar_usuario,
     listar_cartoes_do_usuario

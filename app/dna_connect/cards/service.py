@@ -1,5 +1,5 @@
-from app.cards.repository import CardRepository
-from app.users.service import buscar_usuario_por_email
+from app.dna_connect.cards.repository import CardRepository
+from app.dna_connect.users.service import buscar_usuario_por_email
 
 
 def init_cards_db():

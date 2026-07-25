@@ -1,5 +1,5 @@
-from app.database.connection import Database
-from app.users.models import User
+from app.dna_connect.database.connection import Database
+from app.dna_connect.users.models import User
 
 
 class UserRepository:
