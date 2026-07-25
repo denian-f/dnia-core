@@ -4,6 +4,7 @@ from app.dna_connect.cards.routes import router as cards_router
 from app.dna_connect.cards.service import init_cards_db
 from app.dna_connect.users.routes import router as users_router
 from app.dna_connect.users.service import init_users_db
+from app.dna_connect.dashboard.routes import router as dashboard_router
 
 app = FastAPI(
     title="DNIA Core",
@@ -13,6 +14,7 @@ app = FastAPI(
 app.include_router(whatsapp_router)
 app.include_router(cards_router)
 app.include_router(users_router)
+app.include_router(dashboard_router)
 
 init_users_db()
 init_cards_db()
