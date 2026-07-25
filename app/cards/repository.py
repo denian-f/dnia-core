@@ -130,6 +130,43 @@ class CardRepository:
             updated_at=linha[6]
         )
 
+    def listar_por_owner(self, owner_id: int):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            SELECT
+
+                id,
+                code,
+                target_url,
+                activated,
+                owner_id,
+                created_at,
+                updated_at
+
+            FROM cards
+
+            WHERE owner_id = %s
+
+            ORDER BY code
+
+        """, (owner_id,))
+
+        return [
+            Card(
+                id=linha[0],
+                code=linha[1],
+                target_url=linha[2],
+                activated=linha[3],
+                owner_id=linha[4],
+                created_at=linha[5],
+                updated_at=linha[6]
+            )
+            for linha in cursor.fetchall()
+        ]
+
     def vincular_usuario(self, code: str, owner_id: int):
 
         cursor = self.db.cursor()

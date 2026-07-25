@@ -19,21 +19,16 @@ def init_users_db():
         repo.fechar()
 
 
-def buscar_ou_criar_usuario(name: str, email: str):
+def buscar_usuario_por_email(email: str):
     """
-    Retorna o usuário com o e-mail informado, criando-o caso não exista.
+    Retorna o usuário com o e-mail informado, ou None caso não exista.
     """
 
     repo = UserRepository()
 
     try:
 
-        user = repo.buscar_por_email(email)
-
-        if user:
-            return user
-
-        return repo.criar_usuario(name=name, email=email)
+        return repo.buscar_por_email(email)
 
     finally:
 
@@ -74,15 +69,7 @@ def autenticar_usuario(email: str, password: str):
     Valida e-mail e senha de um usuário.
     """
 
-    repo = UserRepository()
-
-    try:
-
-        user = repo.buscar_por_email(email)
-
-    finally:
-
-        repo.fechar()
+    user = buscar_usuario_por_email(email)
 
     if not user or not user.password_hash:
         return {"status": "invalid_credentials"}
@@ -91,3 +78,21 @@ def autenticar_usuario(email: str, password: str):
         return {"status": "invalid_credentials"}
 
     return {"status": "authenticated", "user": user}
+
+
+def listar_cartoes_do_usuario(email: str):
+    """
+    Retorna os cartões pertencentes ao usuário com o e-mail informado.
+    """
+
+    user = buscar_usuario_por_email(email)
+
+    if not user:
+        return {"status": "not_found"}
+
+    # Import local para evitar importação circular
+    from app.cards.service import listar_cartoes_por_owner
+
+    cartoes = listar_cartoes_por_owner(user.id)
+
+    return {"status": "ok", "cartoes": cartoes}

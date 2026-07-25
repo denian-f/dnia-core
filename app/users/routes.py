@@ -1,7 +1,11 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.users.service import registrar_usuario, autenticar_usuario
+from app.users.service import (
+    registrar_usuario,
+    autenticar_usuario,
+    listar_cartoes_do_usuario
+)
 
 router = APIRouter()
 
@@ -97,3 +101,24 @@ def login(payload: LoginRequest):
             "email": user.email
         }
     }
+
+
+@router.get("/users/{email}/cards")
+def get_user_cards(email: str):
+    """
+    Lista os cartões pertencentes ao usuário com o e-mail informado.
+    """
+
+    resultado = listar_cartoes_do_usuario(email)
+
+    if resultado["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+    return [
+        {
+            "code": card.code,
+            "activated": card.activated,
+            "target_url": card.target_url
+        }
+        for card in resultado["cartoes"]
+    ]

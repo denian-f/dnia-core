@@ -9,14 +9,12 @@ router = APIRouter()
 
 class ActivateRequest(BaseModel):
 
-    name: str
     email: str
     card_code: str
 
     model_config = {
         "json_schema_extra": {
             "example": {
-                "name": "Denian Fernandes",
                 "email": "denian@email.com",
                 "card_code": "TESTE01"
             }
@@ -41,14 +39,20 @@ def redirect_card(card_code: str):
 @router.post("/activate")
 def activate_card(payload: ActivateRequest):
     """
-    Ativa um cartão, associando-o a um usuário (existente ou novo).
+    Ativa um cartão, associando-o a um usuário já cadastrado.
     """
 
     resultado = ativar_cartao(
-        name=payload.name,
         email=payload.email,
         card_code=payload.card_code
     )
+
+    if resultado["status"] == "unauthorized":
+
+        raise HTTPException(
+            status_code=401,
+            detail="Usuário não encontrado. Cadastre-se em /register antes de ativar um cartão."
+        )
 
     if resultado["status"] == "not_found":
         raise HTTPException(status_code=404, detail="Cartão não encontrado.")
