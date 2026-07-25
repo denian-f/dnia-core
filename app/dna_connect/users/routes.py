@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from app.dna_connect.users.service import (
@@ -6,6 +6,8 @@ from app.dna_connect.users.service import (
     autenticar_usuario,
     listar_cartoes_do_usuario
 )
+from app.dna_connect.auth.jwt import gerar_token
+from app.dna_connect.auth.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -76,7 +78,7 @@ def register(payload: RegisterRequest):
 @router.post("/login")
 def login(payload: LoginRequest):
     """
-    Valida e-mail e senha de um usuário.
+    Valida e-mail e senha de um usuário e retorna um Bearer Token (JWT).
     """
 
     resultado = autenticar_usuario(
@@ -93,26 +95,24 @@ def login(payload: LoginRequest):
 
     user = resultado["user"]
 
+    access_token = gerar_token(
+        user_id=user.id,
+        email=user.email
+    )
+
     return {
-        "message": "Login realizado com sucesso!",
-        "user": {
-            "id": user.id,
-            "name": user.name,
-            "email": user.email
-        }
+        "access_token": access_token,
+        "token_type": "bearer"
     }
 
 
-@router.get("/users/{email}/cards")
-def get_user_cards(email: str):
+@router.get("/users/me/cards")
+def get_my_cards(current_user=Depends(get_current_user)):
     """
-    Lista os cartões pertencentes ao usuário com o e-mail informado.
+    Lista os cartões pertencentes ao usuário autenticado.
     """
 
-    resultado = listar_cartoes_do_usuario(email)
-
-    if resultado["status"] == "not_found":
-        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+    resultado = listar_cartoes_do_usuario(current_user.email)
 
     return [
         {

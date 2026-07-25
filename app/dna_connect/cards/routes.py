@@ -1,21 +1,20 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from app.dna_connect.cards.service import resolve_target_url, ativar_cartao
+from app.dna_connect.auth.dependencies import get_current_user
 
 router = APIRouter()
 
 
 class ActivateRequest(BaseModel):
 
-    email: str
     card_code: str
 
     model_config = {
         "json_schema_extra": {
             "example": {
-                "email": "denian@email.com",
                 "card_code": "TESTE01"
             }
         }
@@ -37,13 +36,16 @@ def redirect_card(card_code: str):
 
 
 @router.post("/activate")
-def activate_card(payload: ActivateRequest):
+def activate_card(
+    payload: ActivateRequest,
+    current_user=Depends(get_current_user)
+):
     """
-    Ativa um cartão, associando-o a um usuário já cadastrado.
+    Ativa um cartão, associando-o ao usuário autenticado.
     """
 
     resultado = ativar_cartao(
-        email=payload.email,
+        email=current_user.email,
         card_code=payload.card_code
     )
 
