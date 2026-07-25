@@ -1,4 +1,8 @@
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+
 from app.whatsapp.webhook import router as whatsapp_router
 from app.dna_connect.cards.routes import router as cards_router
 from app.dna_connect.cards.service import init_cards_db
@@ -15,6 +19,17 @@ app.include_router(whatsapp_router)
 app.include_router(cards_router)
 app.include_router(users_router)
 app.include_router(dashboard_router)
+
+DASHBOARD_STATIC_DIR = (
+    Path(__file__).resolve().parent
+    / "app" / "dna_connect" / "dashboard" / "static"
+)
+
+app.mount(
+    "/dashboard/static",
+    StaticFiles(directory=str(DASHBOARD_STATIC_DIR)),
+    name="dashboard_static"
+)
 
 init_users_db()
 init_cards_db()
