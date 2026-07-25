@@ -33,6 +33,34 @@ class CardRepository:
 
         self.db.commit()
 
+    def criar_relacionamento_owner(self):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            ALTER TABLE cards
+            ADD COLUMN IF NOT EXISTS owner_id INTEGER
+
+        """)
+
+        cursor.execute("""
+
+            DO $$
+            BEGIN
+
+                ALTER TABLE cards
+                ADD CONSTRAINT fk_cards_owner
+                FOREIGN KEY (owner_id) REFERENCES users (id);
+
+            EXCEPTION
+                WHEN duplicate_object THEN NULL;
+            END $$;
+
+        """)
+
+        self.db.commit()
+
     def seed_cartao_teste(self):
 
         cursor = self.db.cursor()
@@ -77,6 +105,7 @@ class CardRepository:
                 code,
                 target_url,
                 activated,
+                owner_id,
                 created_at,
                 updated_at
 
@@ -96,9 +125,35 @@ class CardRepository:
             code=linha[1],
             target_url=linha[2],
             activated=linha[3],
-            created_at=linha[4],
-            updated_at=linha[5]
+            owner_id=linha[4],
+            created_at=linha[5],
+            updated_at=linha[6]
         )
+
+    def vincular_usuario(self, code: str, owner_id: int):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            UPDATE cards
+
+            SET
+
+                owner_id = %s,
+                activated = TRUE,
+                updated_at = NOW()
+
+            WHERE code = %s
+
+        """, (
+
+            owner_id,
+            code
+
+        ))
+
+        self.db.commit()
 
     def fechar(self):
 
