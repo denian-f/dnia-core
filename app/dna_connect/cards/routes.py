@@ -1,5 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 from app.dna_connect.cards.service import (
@@ -9,9 +12,22 @@ from app.dna_connect.cards.service import (
     listar_cartoes_por_owner,
     obter_cartao
 )
-from app.dna_connect.auth.dependencies import get_current_user
+from app.dna_connect.auth.dependencies import get_current_user, get_optional_user
 
 router = APIRouter()
+
+templates = Jinja2Templates(
+    directory=str(Path(__file__).resolve().parent / "templates")
+)
+
+
+def _validar_target_url(target_url: str) -> bool:
+    """
+    Mesma validação usada pela API: URL obrigatória, iniciando com
+    http:// ou https://.
+    """
+
+    return bool(target_url) and target_url.startswith(("http://", "https://"))
 
 
 class ActivateRequest(BaseModel):
@@ -163,7 +179,7 @@ def update_card(
     Atualiza o link (target_url) de um cartão pertencente ao usuário autenticado.
     """
 
-    if not payload.target_url or not payload.target_url.startswith(("http://", "https://")):
+    if not _validar_target_url(payload.target_url):
 
         raise HTTPException(
             status_code=400,
@@ -191,3 +207,106 @@ def update_card(
         "card_code": resultado["card_code"],
         "target_url": resultado["target_url"]
     }
+
+
+@router.get("/cards/{card_code}/edit")
+def edit_card_view(
+    card_code: str,
+    request: Request,
+    current_user=Depends(get_optional_user)
+):
+    """
+    Renderiza a tela web de edição do link de um cartão.
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    resultado = obter_cartao(
+        card_code=card_code,
+        owner_id=current_user.id
+    )
+
+    if resultado["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Cartão não encontrado.")
+
+    if resultado["status"] == "forbidden":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Você não tem permissão para editar este cartão."
+        )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="edit_card.html",
+        context={
+            "cartao": resultado["card"],
+            "erro": None,
+            "sucesso": None
+        }
+    )
+
+
+@router.post("/cards/{card_code}/edit")
+async def edit_card_submit(
+    card_code: str,
+    request: Request,
+    current_user=Depends(get_optional_user)
+):
+    """
+    Processa a edição web do link do cartão, reutilizando exatamente o
+    mesmo Service de atualização usado pela API (PUT /cards/{card_code}).
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    form = await request.form()
+    target_url = form.get("target_url", "")
+
+    if not _validar_target_url(target_url):
+
+        resultado = obter_cartao(
+            card_code=card_code,
+            owner_id=current_user.id
+        )
+
+        if resultado["status"] == "not_found":
+            raise HTTPException(status_code=404, detail="Cartão não encontrado.")
+
+        if resultado["status"] == "forbidden":
+
+            raise HTTPException(
+                status_code=403,
+                detail="Você não tem permissão para editar este cartão."
+            )
+
+        return templates.TemplateResponse(
+            request=request,
+            name="edit_card.html",
+            context={
+                "cartao": resultado["card"],
+                "erro": "target_url deve ser uma URL válida, iniciando com http:// ou https://.",
+                "sucesso": None
+            },
+            status_code=400
+        )
+
+    resultado = atualizar_link_cartao(
+        card_code=card_code,
+        owner_id=current_user.id,
+        target_url=target_url
+    )
+
+    if resultado["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Cartão não encontrado.")
+
+    if resultado["status"] == "forbidden":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Você não tem permissão para editar este cartão."
+        )
+
+    return RedirectResponse(url="/dashboard/view", status_code=302)

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Cartão - DNA Connect</title>
+    <link rel="stylesheet" href="/cards/static/css/edit_card.css">
+</head>
+<body>
+
+    <main class="edit-container">
+
+        <h1 class="edit-title">Editar Cartão</h1>
+
+        <form class="edit-form" method="post" action="/cards/{{ cartao.code }}/edit">
+
+            <label for="code">Código do cartão</label>
+            <input type="text" id="code" value="{{ cartao.code }}" disabled>
+
+            <label for="target_url">Target URL</label>
+            <input type="text" id="target_url" name="target_url" value="{{ cartao.target_url }}" required>
+
+            <div class="edit-actions">
+                <button type="submit" class="btn-save">Salvar</button>
+                <a href="/dashboard/view" class="btn-cancel">Cancelar</a>
+            </div>
+
+            {% if erro %}
+            <p class="edit-message edit-error">{{ erro }}</p>
+            {% endif %}
+
+            {% if sucesso %}
+            <p class="edit-message edit-success">{{ sucesso }}</p>
+            {% endif %}
+
+        </form>
+
+    </main>
+
+</body>
+</html>
