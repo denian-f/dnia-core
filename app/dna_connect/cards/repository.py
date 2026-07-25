@@ -192,6 +192,30 @@ class CardRepository:
 
         self.db.commit()
 
+    def atualizar_target_url(self, code: str, target_url: str):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            UPDATE cards
+
+            SET
+
+                target_url = %s,
+                updated_at = NOW()
+
+            WHERE code = %s
+
+        """, (
+
+            target_url,
+            code
+
+        ))
+
+        self.db.commit()
+
     def fechar(self):
 
         self.db.close()

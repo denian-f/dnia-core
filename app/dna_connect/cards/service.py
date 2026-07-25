@@ -77,6 +77,36 @@ def ativar_cartao(email: str, card_code: str):
     }
 
 
+def atualizar_link_cartao(card_code: str, owner_id: int, target_url: str):
+    """
+    Atualiza o target_url de um cartão, caso pertença ao usuário informado.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+        if not card:
+            return {"status": "not_found"}
+
+        if card.owner_id != owner_id:
+            return {"status": "forbidden"}
+
+        repo.atualizar_target_url(code=card_code, target_url=target_url)
+
+    finally:
+
+        repo.fechar()
+
+    return {
+        "status": "updated",
+        "card_code": card_code,
+        "target_url": target_url
+    }
+
+
 def listar_cartoes_por_owner(owner_id: int):
     """
     Retorna todos os cartões pertencentes a um usuário.
