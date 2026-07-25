@@ -1,9 +1,27 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 
 from app.cards.service import resolve_target_url, ativar_cartao
 
 router = APIRouter()
+
+
+class ActivateRequest(BaseModel):
+
+    name: str
+    email: str
+    card_code: str
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "name": "Denian Fernandes",
+                "email": "denian@email.com",
+                "card_code": "TESTE01"
+            }
+        }
+    }
 
 
 @router.get("/c/{card_code}")
@@ -21,28 +39,15 @@ def redirect_card(card_code: str):
 
 
 @router.post("/activate")
-async def activate_card(request: Request):
+def activate_card(payload: ActivateRequest):
     """
     Ativa um cartão, associando-o a um usuário (existente ou novo).
     """
 
-    data = await request.json()
-
-    name = data.get("name")
-    email = data.get("email")
-    card_code = data.get("card_code")
-
-    if not name or not email or not card_code:
-
-        raise HTTPException(
-            status_code=400,
-            detail="Campos obrigatórios: name, email, card_code."
-        )
-
     resultado = ativar_cartao(
-        name=name,
-        email=email,
-        card_code=card_code
+        name=payload.name,
+        email=payload.email,
+        card_code=payload.card_code
     )
 
     if resultado["status"] == "not_found":

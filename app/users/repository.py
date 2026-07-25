@@ -32,6 +32,19 @@ class UserRepository:
 
         self.db.commit()
 
+    def adicionar_coluna_senha(self):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)
+
+        """)
+
+        self.db.commit()
+
     # =====================================================
     # USUÁRIOS
     # =====================================================
@@ -47,6 +60,7 @@ class UserRepository:
                 id,
                 name,
                 email,
+                password_hash,
                 created_at,
                 updated_at
 
@@ -65,11 +79,12 @@ class UserRepository:
             id=linha[0],
             name=linha[1],
             email=linha[2],
-            created_at=linha[3],
-            updated_at=linha[4]
+            password_hash=linha[3],
+            created_at=linha[4],
+            updated_at=linha[5]
         )
 
-    def criar_usuario(self, name: str, email: str):
+    def criar_usuario(self, name: str, email: str, password_hash: str = None):
 
         cursor = self.db.cursor()
 
@@ -78,18 +93,20 @@ class UserRepository:
             INSERT INTO users (
 
                 name,
-                email
+                email,
+                password_hash
 
             )
 
-            VALUES (%s, %s)
+            VALUES (%s, %s, %s)
 
-            RETURNING id, name, email, created_at, updated_at
+            RETURNING id, name, email, password_hash, created_at, updated_at
 
         """, (
 
             name,
-            email
+            email,
+            password_hash
 
         ))
 
@@ -101,8 +118,9 @@ class UserRepository:
             id=linha[0],
             name=linha[1],
             email=linha[2],
-            created_at=linha[3],
-            updated_at=linha[4]
+            password_hash=linha[3],
+            created_at=linha[4],
+            updated_at=linha[5]
         )
 
     def fechar(self):

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from app.whatsapp.webhook import router as whatsapp_router
 from app.cards.routes import router as cards_router
 from app.cards.service import init_cards_db
+from app.users.routes import router as users_router
 from app.users.service import init_users_db
 
 app = FastAPI(
@@ -11,6 +12,7 @@ app = FastAPI(
 
 app.include_router(whatsapp_router)
 app.include_router(cards_router)
+app.include_router(users_router)
 
 init_users_db()
 init_cards_db()
