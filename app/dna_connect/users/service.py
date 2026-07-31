@@ -1,5 +1,9 @@
+import re
+
 from app.dna_connect.users.repository import UserRepository
 from app.security.hashing import hash_password, verify_password
+
+EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def init_users_db():
@@ -96,3 +100,44 @@ def listar_cartoes_do_usuario(email: str):
     cartoes = listar_cartoes_por_owner(user.id)
 
     return {"status": "ok", "cartoes": cartoes}
+
+
+def _email_valido(email: str) -> bool:
+
+    return bool(email) and bool(EMAIL_REGEX.match(email))
+
+
+def atualizar_perfil_usuario(user_id: int, name: str, email: str):
+    """
+    Atualiza nome e e-mail do usuário autenticado.
+    """
+
+    if not name:
+        return {"status": "name_required"}
+
+    if not email:
+        return {"status": "email_required"}
+
+    if not _email_valido(email):
+        return {"status": "invalid_email"}
+
+    repo = UserRepository()
+
+    try:
+
+        existente = repo.buscar_por_email(email)
+
+        if existente and existente.id != user_id:
+            return {"status": "email_exists"}
+
+        user = repo.atualizar_perfil(
+            user_id=user_id,
+            name=name,
+            email=email
+        )
+
+    finally:
+
+        repo.fechar()
+
+    return {"status": "updated", "user": user}

@@ -57,6 +57,17 @@ app.mount(
     name="cards_static"
 )
 
+PROFILE_STATIC_DIR = (
+    Path(__file__).resolve().parent
+    / "app" / "dna_connect" / "users" / "static"
+)
+
+app.mount(
+    "/profile/static",
+    StaticFiles(directory=str(PROFILE_STATIC_DIR)),
+    name="profile_static"
+)
+
 init_users_db()
 init_cards_db()
 

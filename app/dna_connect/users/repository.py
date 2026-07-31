@@ -123,6 +123,45 @@ class UserRepository:
             updated_at=linha[5]
         )
 
+    def atualizar_perfil(self, user_id: int, name: str, email: str):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            UPDATE users
+
+            SET
+
+                name = %s,
+                email = %s,
+                updated_at = NOW()
+
+            WHERE id = %s
+
+            RETURNING id, name, email, password_hash, created_at, updated_at
+
+        """, (
+
+            name,
+            email,
+            user_id
+
+        ))
+
+        linha = cursor.fetchone()
+
+        self.db.commit()
+
+        return User(
+            id=linha[0],
+            name=linha[1],
+            email=linha[2],
+            password_hash=linha[3],
+            created_at=linha[4],
+            updated_at=linha[5]
+        )
+
     def fechar(self):
 
         self.db.close()

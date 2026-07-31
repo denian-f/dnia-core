@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Perfil - DNA Connect</title>
+    <link rel="stylesheet" href="/profile/static/css/profile.css">
+</head>
+<body>
+
+    <main class="profile-container">
+
+        <h1 class="profile-title">Meu Perfil</h1>
+
+        <form class="profile-form" method="post" action="/profile">
+
+            <label for="name">Nome</label>
+            <input type="text" id="name" name="name" value="{{ usuario.name }}" required>
+
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="{{ usuario.email }}" required>
+
+            <div class="profile-actions">
+                <button type="submit" class="btn-save">Salvar</button>
+                <a href="/dashboard/view" class="btn-cancel">Cancelar</a>
+            </div>
+
+            {% if erro %}
+            <p class="profile-message profile-error">{{ erro }}</p>
+            {% endif %}
+
+            {% if sucesso %}
+            <p class="profile-message profile-success">{{ sucesso }}</p>
+            {% endif %}
+
+        </form>
+
+    </main>
+
+</body>
+</html>
