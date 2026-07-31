@@ -141,3 +141,55 @@ def atualizar_perfil_usuario(user_id: int, name: str, email: str):
         repo.fechar()
 
     return {"status": "updated", "user": user}
+
+
+def alterar_senha_usuario(
+    user_id: int,
+    senha_atual: str,
+    nova_senha: str,
+    confirmar_senha: str
+):
+    """
+    Altera a senha do usuário autenticado, reutilizando o hashing
+    já existente (app.security.hashing) para validar e gerar o hash.
+    """
+
+    if not senha_atual:
+        return {"status": "current_password_required"}
+
+    if not nova_senha:
+        return {"status": "new_password_required"}
+
+    if not confirmar_senha:
+        return {"status": "confirmation_required"}
+
+    if nova_senha != confirmar_senha:
+        return {"status": "password_mismatch"}
+
+    repo = UserRepository()
+
+    try:
+
+        user = repo.buscar_por_id(user_id)
+
+        if not user or not user.password_hash:
+            return {"status": "invalid_current_password"}
+
+        if not verify_password(senha_atual, user.password_hash):
+            return {"status": "invalid_current_password"}
+
+        if verify_password(nova_senha, user.password_hash):
+            return {"status": "same_password"}
+
+        novo_hash = hash_password(nova_senha)
+
+        repo.atualizar_senha(
+            user_id=user_id,
+            password_hash=novo_hash
+        )
+
+    finally:
+
+        repo.fechar()
+
+    return {"status": "updated"}

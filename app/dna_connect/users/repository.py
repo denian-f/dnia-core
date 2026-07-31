@@ -84,6 +84,41 @@ class UserRepository:
             updated_at=linha[5]
         )
 
+    def buscar_por_id(self, user_id: int):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            SELECT
+
+                id,
+                name,
+                email,
+                password_hash,
+                created_at,
+                updated_at
+
+            FROM users
+
+            WHERE id = %s
+
+        """, (user_id,))
+
+        linha = cursor.fetchone()
+
+        if not linha:
+            return None
+
+        return User(
+            id=linha[0],
+            name=linha[1],
+            email=linha[2],
+            password_hash=linha[3],
+            created_at=linha[4],
+            updated_at=linha[5]
+        )
+
     def criar_usuario(self, name: str, email: str, password_hash: str = None):
 
         cursor = self.db.cursor()
@@ -161,6 +196,30 @@ class UserRepository:
             created_at=linha[4],
             updated_at=linha[5]
         )
+
+    def atualizar_senha(self, user_id: int, password_hash: str):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            UPDATE users
+
+            SET
+
+                password_hash = %s,
+                updated_at = NOW()
+
+            WHERE id = %s
+
+        """, (
+
+            password_hash,
+            user_id
+
+        ))
+
+        self.db.commit()
 
     def fechar(self):
 

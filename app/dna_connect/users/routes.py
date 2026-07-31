@@ -9,7 +9,8 @@ from app.dna_connect.users.service import (
     registrar_usuario,
     autenticar_usuario,
     listar_cartoes_do_usuario,
-    atualizar_perfil_usuario
+    atualizar_perfil_usuario,
+    alterar_senha_usuario
 )
 from app.dna_connect.auth.jwt import gerar_token
 from app.dna_connect.auth.dependencies import get_current_user, get_optional_user
@@ -28,6 +29,15 @@ PROFILE_ERROR_MESSAGES = {
     "email_required": "E-mail é obrigatório.",
     "invalid_email": "E-mail inválido.",
     "email_exists": "Este e-mail já está em uso por outro usuário."
+}
+
+CHANGE_PASSWORD_ERROR_MESSAGES = {
+    "current_password_required": "Senha atual é obrigatória.",
+    "new_password_required": "Nova senha é obrigatória.",
+    "confirmation_required": "Confirmação de senha é obrigatória.",
+    "password_mismatch": "Nova senha e confirmação não coincidem.",
+    "invalid_current_password": "Senha atual incorreta.",
+    "same_password": "A nova senha deve ser diferente da senha atual."
 }
 
 
@@ -224,3 +234,72 @@ async def profile_submit(
     )
 
     return response
+
+
+@router.get("/change-password")
+def change_password_view(
+    request: Request,
+    current_user=Depends(get_optional_user)
+):
+    """
+    Renderiza a tela web de alteração de senha do usuário autenticado.
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="change_password.html",
+        context={"erro": None, "sucesso": None}
+    )
+
+
+@router.post("/change-password")
+async def change_password_submit(
+    request: Request,
+    current_user=Depends(get_optional_user)
+):
+    """
+    Processa a alteração web de senha, reutilizando exatamente o Service
+    específico de alteração de senha.
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    form = await request.form()
+    senha_atual = form.get("current_password", "")
+    nova_senha = form.get("new_password", "")
+    confirmar_senha = form.get("confirm_password", "")
+
+    resultado = alterar_senha_usuario(
+        user_id=current_user.id,
+        senha_atual=senha_atual,
+        nova_senha=nova_senha,
+        confirmar_senha=confirmar_senha
+    )
+
+    if resultado["status"] != "updated":
+
+        return templates.TemplateResponse(
+            request=request,
+            name="change_password.html",
+            context={
+                "erro": CHANGE_PASSWORD_ERROR_MESSAGES.get(
+                    resultado["status"],
+                    "Não foi possível alterar a senha."
+                ),
+                "sucesso": None
+            },
+            status_code=400
+        )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="change_password.html",
+        context={
+            "erro": None,
+            "sucesso": "Senha alterada com sucesso!"
+        }
+    )
