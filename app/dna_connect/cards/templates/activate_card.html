@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ativar Cartão - DNA Connect</title>
+    <link rel="stylesheet" href="/cards/static/css/activate_card.css">
+</head>
+<body>
+
+    <main class="activate-container">
+
+        <h1 class="activate-title">Ativar Cartão</h1>
+
+        <form class="activate-form" method="post" action="/cards/activate">
+
+            <label for="card_code">Código do cartão</label>
+            <input type="text" id="card_code" name="card_code" required>
+
+            <div class="activate-actions">
+                <button type="submit" class="btn-activate">Ativar</button>
+                <a href="/dashboard/view" class="btn-cancel">Cancelar</a>
+            </div>
+
+            {% if erro %}
+            <p class="activate-message activate-error">{{ erro }}</p>
+            {% endif %}
+
+        </form>
+
+    </main>
+
+</body>
+</html>

@@ -134,6 +134,78 @@ def list_my_cards(current_user=Depends(get_current_user)):
     ]
 
 
+@router.get("/cards/activate")
+def activate_card_view(
+    request: Request,
+    current_user=Depends(get_optional_user)
+):
+    """
+    Renderiza a tela web de ativação de cartão.
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="activate_card.html",
+        context={"erro": None}
+    )
+
+
+@router.post("/cards/activate")
+async def activate_card_submit(
+    request: Request,
+    current_user=Depends(get_optional_user)
+):
+    """
+    Processa a ativação web de um cartão, reutilizando exatamente o
+    mesmo Service de ativação usado pela API (POST /activate).
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    form = await request.form()
+    card_code = form.get("card_code", "")
+
+    resultado = ativar_cartao(
+        email=current_user.email,
+        card_code=card_code
+    )
+
+    if resultado["status"] == "unauthorized":
+
+        return templates.TemplateResponse(
+            request=request,
+            name="activate_card.html",
+            context={
+                "erro": "Usuário não encontrado. Cadastre-se em /register antes de ativar um cartão."
+            },
+            status_code=401
+        )
+
+    if resultado["status"] == "not_found":
+
+        return templates.TemplateResponse(
+            request=request,
+            name="activate_card.html",
+            context={"erro": "Cartão não encontrado."},
+            status_code=404
+        )
+
+    if resultado["status"] == "already_activated":
+
+        return templates.TemplateResponse(
+            request=request,
+            name="activate_card.html",
+            context={"erro": "Este cartão já está ativado."},
+            status_code=409
+        )
+
+    return RedirectResponse(url="/dashboard/view", status_code=302)
+
+
 @router.get("/cards/{card_code}")
 def get_card(
     card_code: str,
