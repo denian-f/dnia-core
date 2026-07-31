@@ -17,7 +17,10 @@ from app.dna_connect.auth.dependencies import get_current_user, get_optional_use
 router = APIRouter()
 
 templates = Jinja2Templates(
-    directory=str(Path(__file__).resolve().parent / "templates")
+    directory=[
+        str(Path(__file__).resolve().parent / "templates"),
+        str(Path(__file__).resolve().parent.parent / "dashboard" / "templates")
+    ]
 )
 
 PROFILE_ERROR_MESSAGES = {

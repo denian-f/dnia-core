@@ -1,0 +1,29 @@
+.app-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    background-color: #1f2937;
+}
+
+.nav-link {
+    color: #e5e7eb;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.nav-link:hover {
+    color: #ffffff;
+}
+
+.nav-logout-form {
+    margin: 0 0 0 auto;
+}
+
+.nav-logout {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+}
