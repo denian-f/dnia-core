@@ -1,0 +1,20 @@
+.register-prompt {
+    text-align: center;
+    margin: 16px 0 0 0;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.register-link {
+    display: block;
+    text-align: center;
+    margin-top: 4px;
+    font-size: 13px;
+    color: #111827;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.register-link:hover {
+    text-decoration: underline;
+}
