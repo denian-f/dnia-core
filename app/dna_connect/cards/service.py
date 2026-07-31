@@ -14,6 +14,7 @@ def init_cards_db():
 
         repo.criar_tabela()
         repo.criar_relacionamento_owner()
+        repo.permitir_target_url_nulo()
         repo.seed_cartao_teste()
 
     finally:
@@ -105,6 +106,33 @@ def atualizar_link_cartao(card_code: str, owner_id: int, target_url: str):
         "card_code": card_code,
         "target_url": target_url
     }
+
+
+def remover_cartao(card_code: str, owner_id: int):
+    """
+    Remove a associação de um cartão com o usuário (remoção lógica): o
+    cartão nunca é apagado, apenas volta ao estado anterior à ativação.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+        if not card:
+            return {"status": "not_found"}
+
+        if card.owner_id != owner_id:
+            return {"status": "forbidden"}
+
+        repo.remover_associacao(code=card_code)
+
+    finally:
+
+        repo.fechar()
+
+    return {"status": "removed", "card_code": card_code}
 
 
 def listar_cartoes_por_owner(owner_id: int):

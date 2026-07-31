@@ -10,7 +10,8 @@ from app.dna_connect.cards.service import (
     ativar_cartao,
     atualizar_link_cartao,
     listar_cartoes_por_owner,
-    obter_cartao
+    obter_cartao,
+    remover_cartao
 )
 from app.dna_connect.auth.dependencies import get_current_user, get_optional_user
 
@@ -382,6 +383,37 @@ async def edit_card_submit(
         raise HTTPException(
             status_code=403,
             detail="Você não tem permissão para editar este cartão."
+        )
+
+    return RedirectResponse(url="/dashboard/view", status_code=302)
+
+
+@router.post("/cards/{card_code}/remove")
+def remove_card(
+    card_code: str,
+    current_user=Depends(get_optional_user)
+):
+    """
+    Remove a associação do cartão com o usuário autenticado (remoção
+    lógica, reutilizando exatamente o Service de remoção).
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    resultado = remover_cartao(
+        card_code=card_code,
+        owner_id=current_user.id
+    )
+
+    if resultado["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Cartão não encontrado.")
+
+    if resultado["status"] == "forbidden":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Você não tem permissão para remover este cartão."
         )
 
     return RedirectResponse(url="/dashboard/view", status_code=302)

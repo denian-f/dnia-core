@@ -47,7 +47,12 @@
                     <td>{{ cartao.target_url }}</td>
                     <td>{{ cartao.created_at }}</td>
                     <td>{{ cartao.updated_at }}</td>
-                    <td><a class="btn-edit" href="/cards/{{ cartao.code }}/edit">Editar</a></td>
+                    <td>
+                        <a class="btn-edit" href="/cards/{{ cartao.code }}/edit">Editar</a>
+                        <form class="remove-card-form" method="post" action="/cards/{{ cartao.code }}/remove">
+                            <button type="submit" class="btn-remove" onclick="return confirm('Deseja realmente remover este cartão?')">Remover</button>
+                        </form>
+                    </td>
                 </tr>
                 {% else %}
                 <tr>

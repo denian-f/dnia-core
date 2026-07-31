@@ -8,7 +8,7 @@ class Card:
 
     id: int
     code: str
-    target_url: str
+    target_url: Optional[str]
     activated: bool
     owner_id: Optional[int]
     created_at: datetime

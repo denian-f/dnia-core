@@ -61,6 +61,19 @@ class CardRepository:
 
         self.db.commit()
 
+    def permitir_target_url_nulo(self):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            ALTER TABLE cards
+            ALTER COLUMN target_url DROP NOT NULL
+
+        """)
+
+        self.db.commit()
+
     def seed_cartao_teste(self):
 
         cursor = self.db.cursor()
@@ -213,6 +226,27 @@ class CardRepository:
             code
 
         ))
+
+        self.db.commit()
+
+    def remover_associacao(self, code: str):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            UPDATE cards
+
+            SET
+
+                owner_id = NULL,
+                activated = FALSE,
+                target_url = NULL,
+                updated_at = NOW()
+
+            WHERE code = %s
+
+        """, (code,))
 
         self.db.commit()
 
