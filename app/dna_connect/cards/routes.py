@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 from app.dna_connect.cards.service import (
-    resolve_target_url,
+    resolver_cartao_publico,
     ativar_cartao,
     atualizar_link_cartao,
     listar_cartoes_por_owner,
@@ -61,17 +61,29 @@ class UpdateCardRequest(BaseModel):
 
 
 @router.get("/c/{card_code}")
-def redirect_card(card_code: str):
+def redirect_card(card_code: str, request: Request):
     """
-    Resolve um cartão NFC pelo código e redireciona para o destino configurado.
+    Resolve o acesso público de um cartão NFC pelo código.
+
+    - Não existe: 404.
+    - Existe mas ainda não está configurado: página pública informativa.
+    - Existe e está configurado: redireciona (307) para o target_url.
     """
 
-    target_url = resolve_target_url(card_code)
+    resultado = resolver_cartao_publico(card_code)
 
-    if not target_url:
+    if resultado["status"] == "not_found":
         raise HTTPException(status_code=404, detail="Cartão não encontrado.")
 
-    return RedirectResponse(url=target_url, status_code=307)
+    if resultado["status"] == "unconfigured":
+
+        return templates.TemplateResponse(
+            request=request,
+            name="card_unconfigured.html",
+            context={}
+        )
+
+    return RedirectResponse(url=resultado["target_url"], status_code=307)
 
 
 @router.post("/activate")

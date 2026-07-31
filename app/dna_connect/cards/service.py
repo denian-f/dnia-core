@@ -22,9 +22,11 @@ def init_cards_db():
         repo.fechar()
 
 
-def resolve_target_url(code: str):
+def resolver_cartao_publico(code: str):
     """
-    Retorna a URL de destino do cartão, caso exista e esteja ativado.
+    Resolve o acesso público de um cartão (rota GET /c/{card_code}),
+    diferenciando três estados: inexistente, existente porém ainda não
+    configurado, ou configurado (pronto para redirecionar).
     """
 
     repo = CardRepository()
@@ -37,10 +39,13 @@ def resolve_target_url(code: str):
 
         repo.fechar()
 
-    if not card or not card.activated:
-        return None
+    if not card:
+        return {"status": "not_found"}
 
-    return card.target_url
+    if card.activated and card.target_url:
+        return {"status": "configured", "target_url": card.target_url}
+
+    return {"status": "unconfigured"}
 
 
 def ativar_cartao(email: str, card_code: str):
