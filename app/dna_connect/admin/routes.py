@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, Request
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.dna_connect.auth.dependencies import get_current_admin_web
@@ -9,6 +9,7 @@ from app.dna_connect.admin.service import (
     listar_todos_cartoes_admin,
     criar_cartao_admin
 )
+from app.dna_connect.cards.service import gerar_qr_code_cartao
 
 router = APIRouter()
 
@@ -95,3 +96,32 @@ async def admin_create_card_submit(
         )
 
     return RedirectResponse(url="/admin", status_code=302)
+
+
+@router.get("/admin/cards/{card_code}/qr")
+def admin_card_qr(
+    card_code: str,
+    current_user=Depends(get_current_admin_web)
+):
+    """
+    Retorna o PNG do QR Code que aponta para a URL pública permanente do
+    cartão (a mesma usada pelo NFC), para uso na arte física do cartão.
+    Reutiliza exatamente a mesma dependência administrativa das demais
+    rotas de /admin.
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    imagem_png = gerar_qr_code_cartao(card_code)
+
+    if imagem_png is None:
+        raise HTTPException(status_code=404, detail="Cartão não encontrado.")
+
+    return Response(
+        content=imagem_png,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'attachment; filename="dna-connect-{card_code}-qr.png"'
+        }
+    )

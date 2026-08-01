@@ -41,6 +41,7 @@
                         <th>Destino</th>
                         <th>Criado em</th>
                         <th>Atualizado em</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,10 +53,11 @@
                         <td>{{ cartao.target_url if cartao.target_url else "-" }}</td>
                         <td>{{ cartao.created_at }}</td>
                         <td>{{ cartao.updated_at }}</td>
+                        <td><a class="btn-edit" href="/admin/cards/{{ cartao.code }}/qr">QR Code</a></td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="cards-empty">Nenhum cartão cadastrado.</td>
+                        <td colspan="7" class="cards-empty">Nenhum cartão cadastrado.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

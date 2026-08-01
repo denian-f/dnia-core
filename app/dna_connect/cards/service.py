@@ -1,5 +1,11 @@
+import io
+
+import qrcode
+from qrcode.constants import ERROR_CORRECT_M
+
 from app.dna_connect.cards.repository import CardRepository
 from app.dna_connect.users.service import buscar_usuario_por_email
+from app.dna_connect.email import config as email_config
 
 
 def init_cards_db():
@@ -178,3 +184,43 @@ def obter_cartao(card_code: str, owner_id: int):
         repo.fechar()
 
     return {"status": "ok", "card": card}
+
+
+def construir_url_publica_cartao(card_code: str) -> str:
+    """
+    Monta a URL pública permanente do cartão — a mesma usada pelo NFC e
+    pelo QR Code: {APP_BASE_URL}/c/{card_code}. Depende exclusivamente
+    do código do cartão, nunca de owner_id, activated ou target_url.
+    """
+
+    return f"{email_config.APP_BASE_URL}/c/{card_code}"
+
+
+def gerar_qr_code_cartao(card_code: str):
+    """
+    Gera a imagem PNG (em memória, nunca persistida em disco) do QR Code
+    que aponta para a URL pública permanente do cartão. Retorna None
+    caso o cartão não exista.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+    finally:
+
+        repo.fechar()
+
+    if not card:
+        return None
+
+    url = construir_url_publica_cartao(card.code)
+
+    imagem = qrcode.make(url, error_correction=ERROR_CORRECT_M)
+
+    buffer = io.BytesIO()
+    imagem.save(buffer, format="PNG")
+
+    return buffer.getvalue()
