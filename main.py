@@ -11,6 +11,8 @@ from app.dna_connect.users.routes import router as users_router
 from app.dna_connect.users.service import init_users_db
 from app.dna_connect.dashboard.routes import router as dashboard_router
 from app.dna_connect.web.routes import router as web_router
+from app.dna_connect.admin.routes import router as admin_router
+from app.dna_connect.admin.service import bootstrap_admin
 from app.dna_connect.auth.dependencies import get_optional_user
 
 app = FastAPI(
@@ -23,6 +25,7 @@ app.include_router(cards_router)
 app.include_router(users_router)
 app.include_router(dashboard_router)
 app.include_router(web_router)
+app.include_router(admin_router)
 
 DASHBOARD_STATIC_DIR = (
     Path(__file__).resolve().parent
@@ -68,8 +71,20 @@ app.mount(
     name="profile_static"
 )
 
+ADMIN_STATIC_DIR = (
+    Path(__file__).resolve().parent
+    / "app" / "dna_connect" / "admin" / "static"
+)
+
+app.mount(
+    "/admin/static",
+    StaticFiles(directory=str(ADMIN_STATIC_DIR)),
+    name="admin_static"
+)
+
 init_users_db()
 init_cards_db()
+bootstrap_admin()
 
 @app.get("/")
 def home(current_user=Depends(get_optional_user)):

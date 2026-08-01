@@ -88,3 +88,39 @@ def get_optional_user(
     token = _resolver_token(request, credentials)
 
     return _autenticar_por_token(token)
+
+
+def get_current_admin(current_user=Depends(get_current_user)):
+    """
+    Exige usuário autenticado (reaproveita get_current_user, sem duplicar
+    decodificação de JWT) e administrador. Uso para API/estilo "sempre 401/403".
+    """
+
+    if not current_user.is_admin:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Acesso restrito a administradores."
+        )
+
+    return current_user
+
+
+def get_current_admin_web(current_user=Depends(get_optional_user)):
+    """
+    Versão amigável para páginas Web: retorna None se não autenticado
+    (a rota decide redirecionar para /login/view) e levanta 403 caso
+    o usuário esteja autenticado mas não seja administrador.
+    """
+
+    if not current_user:
+        return None
+
+    if not current_user.is_admin:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Acesso restrito a administradores."
+        )
+
+    return current_user

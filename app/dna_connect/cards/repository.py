@@ -250,6 +250,63 @@ class CardRepository:
 
         self.db.commit()
 
+    def criar_cartao_disponivel(self, code: str):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            INSERT INTO cards (
+
+                code,
+                target_url,
+                activated
+
+            )
+
+            VALUES (%s, NULL, FALSE)
+
+        """, (code,))
+
+        self.db.commit()
+
+    def listar_todos_admin(self):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            SELECT
+
+                cards.code,
+                cards.activated,
+                cards.target_url,
+                users.name,
+                users.email,
+                cards.created_at,
+                cards.updated_at
+
+            FROM cards
+
+            LEFT JOIN users ON users.id = cards.owner_id
+
+            ORDER BY cards.code
+
+        """)
+
+        return [
+            {
+                "code": linha[0],
+                "activated": linha[1],
+                "target_url": linha[2],
+                "owner_name": linha[3],
+                "owner_email": linha[4],
+                "created_at": linha[5],
+                "updated_at": linha[6]
+            }
+            for linha in cursor.fetchall()
+        ]
+
     def fechar(self):
 
         self.db.close()

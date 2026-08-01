@@ -45,6 +45,19 @@ class UserRepository:
 
         self.db.commit()
 
+    def adicionar_coluna_is_admin(self):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE
+
+        """)
+
+        self.db.commit()
+
     # =====================================================
     # USUÁRIOS
     # =====================================================
@@ -61,6 +74,7 @@ class UserRepository:
                 name,
                 email,
                 password_hash,
+                is_admin,
                 created_at,
                 updated_at
 
@@ -80,8 +94,9 @@ class UserRepository:
             name=linha[1],
             email=linha[2],
             password_hash=linha[3],
-            created_at=linha[4],
-            updated_at=linha[5]
+            is_admin=linha[4],
+            created_at=linha[5],
+            updated_at=linha[6]
         )
 
     def buscar_por_id(self, user_id: int):
@@ -96,6 +111,7 @@ class UserRepository:
                 name,
                 email,
                 password_hash,
+                is_admin,
                 created_at,
                 updated_at
 
@@ -115,8 +131,9 @@ class UserRepository:
             name=linha[1],
             email=linha[2],
             password_hash=linha[3],
-            created_at=linha[4],
-            updated_at=linha[5]
+            is_admin=linha[4],
+            created_at=linha[5],
+            updated_at=linha[6]
         )
 
     def criar_usuario(self, name: str, email: str, password_hash: str = None):
@@ -135,7 +152,7 @@ class UserRepository:
 
             VALUES (%s, %s, %s)
 
-            RETURNING id, name, email, password_hash, created_at, updated_at
+            RETURNING id, name, email, password_hash, is_admin, created_at, updated_at
 
         """, (
 
@@ -154,8 +171,9 @@ class UserRepository:
             name=linha[1],
             email=linha[2],
             password_hash=linha[3],
-            created_at=linha[4],
-            updated_at=linha[5]
+            is_admin=linha[4],
+            created_at=linha[5],
+            updated_at=linha[6]
         )
 
     def atualizar_perfil(self, user_id: int, name: str, email: str):
@@ -174,7 +192,7 @@ class UserRepository:
 
             WHERE id = %s
 
-            RETURNING id, name, email, password_hash, created_at, updated_at
+            RETURNING id, name, email, password_hash, is_admin, created_at, updated_at
 
         """, (
 
@@ -193,8 +211,9 @@ class UserRepository:
             name=linha[1],
             email=linha[2],
             password_hash=linha[3],
-            created_at=linha[4],
-            updated_at=linha[5]
+            is_admin=linha[4],
+            created_at=linha[5],
+            updated_at=linha[6]
         )
 
     def atualizar_senha(self, user_id: int, password_hash: str):
@@ -218,6 +237,25 @@ class UserRepository:
             user_id
 
         ))
+
+        self.db.commit()
+
+    def promover_admin(self, user_id: int):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            UPDATE users
+
+            SET
+
+                is_admin = TRUE,
+                updated_at = NOW()
+
+            WHERE id = %s
+
+        """, (user_id,))
 
         self.db.commit()
 

@@ -10,5 +10,6 @@ class User:
     name: str
     email: str
     password_hash: Optional[str]
+    is_admin: bool
     created_at: datetime
     updated_at: datetime

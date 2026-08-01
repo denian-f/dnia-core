@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administração - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/nav.css">
+    <link rel="stylesheet" href="/dashboard/static/css/dashboard.css">
+    <link rel="stylesheet" href="/admin/static/css/admin.css">
+</head>
+<body>
+
+    {% include "_admin_nav.html" %}
+
+    <main class="app-content">
+
+        <h1 class="admin-title">DNA Connect — Administração</h1>
+
+        <section class="dashboard-summary">
+            <div class="summary-card">
+                <span class="summary-label">Total de cartões</span>
+                <span class="summary-value">{{ resumo.total }}</span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-label">Disponíveis</span>
+                <span class="summary-value">{{ resumo.available }}</span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-label">Ativados</span>
+                <span class="summary-value">{{ resumo.activated }}</span>
+            </div>
+        </section>
+
+        <section class="dashboard-cards">
+            <table class="cards-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Status</th>
+                        <th>Proprietário</th>
+                        <th>Destino</th>
+                        <th>Criado em</th>
+                        <th>Atualizado em</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cartao in cartoes %}
+                    <tr>
+                        <td>{{ cartao.code }}</td>
+                        <td>{{ "Ativado" if cartao.activated else "Disponível" }}</td>
+                        <td>{{ cartao.owner_name if cartao.owner_name else "Disponível" }}</td>
+                        <td>{{ cartao.target_url if cartao.target_url else "-" }}</td>
+                        <td>{{ cartao.created_at }}</td>
+                        <td>{{ cartao.updated_at }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="cards-empty">Nenhum cartão cadastrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+    </main>
+
+</body>
+</html>

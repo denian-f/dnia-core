@@ -17,6 +17,7 @@ def init_users_db():
 
         repo.criar_tabela()
         repo.adicionar_coluna_senha()
+        repo.adicionar_coluna_is_admin()
 
     finally:
 
@@ -193,3 +194,27 @@ def alterar_senha_usuario(
         repo.fechar()
 
     return {"status": "updated"}
+
+
+def promover_usuario_admin(email: str):
+    """
+    Concede permissão administrativa a um usuário já existente. Nunca
+    cria um usuário novo; operação idempotente.
+    """
+
+    repo = UserRepository()
+
+    try:
+
+        user = repo.buscar_por_email(email)
+
+        if not user:
+            return {"status": "not_found"}
+
+        repo.promover_admin(user_id=user.id)
+
+    finally:
+
+        repo.fechar()
+
+    return {"status": "promoted"}

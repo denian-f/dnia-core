@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novo Cartão - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/nav.css">
+    <link rel="stylesheet" href="/admin/static/css/admin.css">
+</head>
+<body>
+
+    {% include "_admin_nav.html" %}
+
+    <main class="admin-form-container">
+
+        <h1 class="admin-title">Cadastrar novo cartão</h1>
+
+        <form class="admin-form" method="post" action="/admin/cards/new">
+
+            <label for="card_code">Código do cartão</label>
+            <input type="text" id="card_code" name="card_code" placeholder="DNAC-A7K9P2" required>
+
+            <div class="admin-actions">
+                <button type="submit" class="btn-save">Cadastrar</button>
+                <a href="/admin" class="btn-cancel">Cancelar</a>
+            </div>
+
+            {% if erro %}
+            <p class="admin-message admin-error">{{ erro }}</p>
+            {% endif %}
+
+        </form>
+
+    </main>
+
+</body>
+</html>
