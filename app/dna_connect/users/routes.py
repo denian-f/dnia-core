@@ -95,7 +95,7 @@ def register(payload: RegisterRequest):
     user = resultado["user"]
 
     return {
-        "message": "Conta criada com sucesso!",
+        "message": "Conta criada com sucesso! Verifique seu e-mail antes de fazer login.",
         "user": {
             "id": user.id,
             "name": user.name,
@@ -120,6 +120,13 @@ def login(payload: LoginRequest):
         raise HTTPException(
             status_code=401,
             detail="E-mail ou senha inválidos."
+        )
+
+    if resultado["status"] == "email_not_verified":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Você precisa verificar seu e-mail antes de entrar."
         )
 
     user = resultado["user"]

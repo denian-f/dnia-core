@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifique seu e-mail - DNA Connect</title>
+    <link rel="stylesheet" href="/login/static/css/login.css">
+    <link rel="stylesheet" href="/login/static/css/verify_email.css">
+</head>
+<body>
+
+    <main class="login-container">
+
+        <h1 class="login-title">Verifique seu e-mail</h1>
+
+        <div class="verify-box">
+
+            <p class="verify-text">
+                Enviamos um link de verificação para
+                {% if email %}<strong>{{ email }}</strong>{% else %}o endereço informado{% endif %}.
+                Acesse sua caixa de entrada e clique no link para confirmar sua conta.
+            </p>
+
+            {% if mensagem %}
+            <p class="verify-message">{{ mensagem }}</p>
+            {% endif %}
+
+            <form class="verify-resend-form" method="post" action="/verify-email/resend">
+                <input type="hidden" name="email" value="{{ email }}">
+                <label for="resend_email">Não recebeu o e-mail?</label>
+                <button type="submit" class="login-button">Reenviar e-mail de verificação</button>
+            </form>
+
+            <a href="/login/view" class="register-link">Voltar ao login</a>
+
+        </div>
+
+    </main>
+
+</body>
+</html>

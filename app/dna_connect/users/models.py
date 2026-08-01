@@ -11,5 +11,9 @@ class User:
     email: str
     password_hash: Optional[str]
     is_admin: bool
+    email_verified: bool
+    email_verification_token_hash: Optional[str]
+    email_verification_expires_at: Optional[datetime]
+    email_verification_last_sent_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime

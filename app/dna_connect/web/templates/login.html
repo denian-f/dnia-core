@@ -27,6 +27,12 @@
             <p class="login-error">{{ erro }}</p>
             {% endif %}
 
+            {% if email_nao_verificado %}
+            <a href="/verify-email/pending?email={{ email_nao_verificado }}" class="register-link">
+                Reenviar e-mail de verificação
+            </a>
+            {% endif %}
+
         </form>
 
         <p class="register-prompt">Ainda não possui uma conta?</p>

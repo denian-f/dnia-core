@@ -1,4 +1,5 @@
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
@@ -6,7 +7,12 @@ from fastapi.templating import Jinja2Templates
 
 from app.dna_connect.auth.dependencies import get_optional_user
 from app.dna_connect.auth.jwt import gerar_token
-from app.dna_connect.users.service import autenticar_usuario, registrar_usuario
+from app.dna_connect.users.service import (
+    autenticar_usuario,
+    registrar_usuario,
+    confirmar_verificacao_email,
+    reenviar_verificacao_email
+)
 
 router = APIRouter()
 
@@ -30,7 +36,7 @@ def login_view(
     return templates.TemplateResponse(
         request=request,
         name="login.html",
-        context={"erro": None}
+        context={"erro": None, "email_nao_verificado": None}
     )
 
 
@@ -57,8 +63,20 @@ async def login_submit(request: Request):
         return templates.TemplateResponse(
             request=request,
             name="login.html",
-            context={"erro": "E-mail ou senha inválidos."},
+            context={"erro": "E-mail ou senha inválidos.", "email_nao_verificado": None},
             status_code=401
+        )
+
+    if resultado["status"] == "email_not_verified":
+
+        return templates.TemplateResponse(
+            request=request,
+            name="login.html",
+            context={
+                "erro": "Você precisa verificar seu e-mail antes de entrar.",
+                "email_nao_verificado": email
+            },
+            status_code=403
         )
 
     user = resultado["user"]
@@ -160,4 +178,71 @@ async def register_submit(request: Request):
             status_code=409
         )
 
-    return RedirectResponse(url="/login/view", status_code=302)
+    return RedirectResponse(
+        url=f"/verify-email/pending?email={quote(email)}",
+        status_code=302
+    )
+
+
+@router.get("/verify-email/pending")
+def verify_email_pending_view(request: Request, email: str = ""):
+    """
+    Página pública informando que é necessário verificar o e-mail
+    antes de acessar a conta.
+    """
+
+    return templates.TemplateResponse(
+        request=request,
+        name="verify_email_pending.html",
+        context={"email": email, "mensagem": None}
+    )
+
+
+@router.post("/verify-email/resend")
+async def verify_email_resend(request: Request):
+    """
+    Reenvia o e-mail de verificação, reutilizando exatamente o Service
+    de reenvio (que já aplica cooldown e nunca revela se a conta existe).
+    """
+
+    form = await request.form()
+    email = form.get("email", "")
+
+    if email:
+        reenviar_verificacao_email(email)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="verify_email_pending.html",
+        context={
+            "email": email,
+            "mensagem": (
+                "Se existir uma conta pendente de verificação para este "
+                "e-mail, enviaremos uma nova mensagem em instantes."
+            )
+        }
+    )
+
+
+@router.get("/verify-email")
+def verify_email_confirm(request: Request, token: str = ""):
+    """
+    Confirma um token de verificação de e-mail, reutilizando exatamente
+    o Service responsável pela regra de negócio.
+    """
+
+    resultado = confirmar_verificacao_email(token)
+
+    if resultado["status"] != "verified":
+
+        return templates.TemplateResponse(
+            request=request,
+            name="verify_email_invalid.html",
+            context={}
+        )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="verify_email_success.html",
+        context={}
+    )

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link inválido - DNA Connect</title>
+    <link rel="stylesheet" href="/login/static/css/login.css">
+    <link rel="stylesheet" href="/login/static/css/verify_email.css">
+</head>
+<body>
+
+    <main class="login-container">
+
+        <h1 class="login-title">Link inválido</h1>
+
+        <div class="verify-box">
+
+            <p class="verify-text verify-text-error">
+                Este link de verificação é inválido ou expirou.
+            </p>
+
+            <form class="verify-resend-form" method="post" action="/verify-email/resend">
+                <label for="resend_email">Informe seu e-mail para receber um novo link:</label>
+                <input type="email" id="resend_email" name="email" required>
+                <button type="submit" class="login-button">Reenviar e-mail de verificação</button>
+            </form>
+
+            <a href="/login/view" class="register-link">Voltar ao login</a>
+
+        </div>
+
+    </main>
+
+</body>
+</html>
