@@ -25,6 +25,7 @@ def init_users_db():
         repo.adicionar_coluna_senha()
         repo.adicionar_coluna_is_admin()
         repo.adicionar_colunas_verificacao_email()
+        repo.adicionar_colunas_reset_senha()
 
     finally:
 
@@ -184,6 +185,169 @@ def reenviar_verificacao_email(email: str):
     enviar_verificacao_email(user)
 
     return {"status": "ok"}
+
+
+def _montar_email_redefinicao_senha(name: str, token: str):
+
+    link = f"{email_config.APP_BASE_URL}/reset-password?token={token}"
+
+    texto = (
+        f"Olá, {name}.\n\n"
+        "Recebemos uma solicitação para redefinir a senha da sua conta "
+        "no DNA Connect.\n\n"
+        "Para definir uma nova senha, acesse o link abaixo:\n"
+        f"{link}\n\n"
+        "Este link expira em 1 hora.\n\n"
+        "Se você não solicitou essa alteração, pode ignorar esta mensagem "
+        "— sua senha continuará a mesma.\n\n"
+        "DNA Connect"
+    )
+
+    html = f"""
+        <p>Olá, {name}.</p>
+        <p>Recebemos uma solicitação para redefinir a senha da sua conta no DNA Connect.</p>
+        <p>Para definir uma nova senha, clique no botão abaixo:</p>
+        <p>
+            <a href="{link}"
+               style="display:inline-block;padding:10px 16px;background-color:#111827;
+                      color:#ffffff;text-decoration:none;border-radius:4px;">
+                Redefinir minha senha
+            </a>
+        </p>
+        <p>Ou copie e cole este link no navegador:<br>{link}</p>
+        <p>Este link expira em 1 hora.</p>
+        <p>Se você não solicitou essa alteração, pode ignorar esta mensagem
+        — sua senha continuará a mesma.</p>
+        <p>DNA Connect</p>
+    """
+
+    return texto, html
+
+
+def solicitar_redefinicao_senha(email: str):
+    """
+    Gera um token de redefinição de senha e envia por e-mail, caso exista
+    uma conta com esse endereço. A resposta é sempre a mesma
+    independentemente do e-mail existir, para evitar enumeração de contas.
+    Não altera email_verified — verificação de e-mail e recuperação de
+    senha são processos independentes.
+    """
+
+    user = buscar_usuario_por_email(email)
+
+    if not user:
+        return {"status": "ok"}
+
+    token, token_hash = _gerar_token_verificacao()
+
+    expira_em = _agora_utc() + timedelta(
+        hours=email_config.PASSWORD_RESET_EXPIRATION_HOURS
+    )
+
+    repo = UserRepository()
+
+    try:
+
+        repo.definir_token_reset_senha(
+            user_id=user.id,
+            token_hash=token_hash,
+            expires_at=expira_em
+        )
+
+    finally:
+
+        repo.fechar()
+
+    texto, html = _montar_email_redefinicao_senha(user.name, token)
+
+    enviar_email(
+        destinatario=user.email,
+        assunto="Redefina sua senha - DNA Connect",
+        conteudo_html=html,
+        conteudo_texto=texto
+    )
+
+    return {"status": "ok"}
+
+
+def _resolver_token_reset_senha(token: str):
+    """
+    Localiza o usuário correspondente a um token de redefinição de senha
+    e informa se ele é válido, inexistente ou expirado. Não consome o
+    token (leitura apenas) — usado tanto para exibir o formulário quanto
+    para validar antes de efetivamente trocar a senha.
+    """
+
+    if not token:
+        return "invalid", None
+
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+    repo = UserRepository()
+
+    try:
+
+        user = repo.buscar_por_token_reset_hash(token_hash)
+
+    finally:
+
+        repo.fechar()
+
+    if not user or not user.password_reset_expires_at:
+        return "invalid", None
+
+    if user.password_reset_expires_at < _agora_utc():
+        return "expired", None
+
+    return "valid", user
+
+
+def validar_token_redefinicao(token: str):
+    """
+    Verifica se um token de redefinição de senha existe e não expirou,
+    sem alterar nada (usado para decidir se a tela de nova senha deve
+    ser exibida).
+    """
+
+    status, _ = _resolver_token_reset_senha(token)
+
+    return {"status": status}
+
+
+def confirmar_redefinicao_senha(token: str, nova_senha: str, confirmar_senha: str):
+    """
+    Confirma um token de redefinição de senha e define a nova senha,
+    reutilizando o mesmo hashing já usado no restante do sistema. Após o
+    sucesso, o token é invalidado (uso único). Não altera email_verified.
+    """
+
+    if not nova_senha or not confirmar_senha:
+        return {"status": "password_required"}
+
+    if nova_senha != confirmar_senha:
+        return {"status": "password_mismatch"}
+
+    status, user = _resolver_token_reset_senha(token)
+
+    if status != "valid":
+        return {"status": status}
+
+    novo_hash = hash_password(nova_senha)
+
+    repo = UserRepository()
+
+    try:
+
+        repo.finalizar_redefinicao_senha(
+            user_id=user.id,
+            password_hash=novo_hash
+        )
+
+    finally:
+
+        repo.fechar()
+
+    return {"status": "updated"}
 
 
 def buscar_usuario_por_email(email: str):

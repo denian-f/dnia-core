@@ -15,5 +15,7 @@ class User:
     email_verification_token_hash: Optional[str]
     email_verification_expires_at: Optional[datetime]
     email_verification_last_sent_at: Optional[datetime]
+    password_reset_token_hash: Optional[str]
+    password_reset_expires_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime

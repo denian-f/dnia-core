@@ -13,6 +13,10 @@
 
         <h1 class="login-title">DNA Connect</h1>
 
+        {% if sucesso %}
+        <p class="login-success">{{ sucesso }}</p>
+        {% endif %}
+
         <form class="login-form" method="post" action="/login/view">
 
             <label for="email">Email</label>
@@ -34,6 +38,8 @@
             {% endif %}
 
         </form>
+
+        <a href="/forgot-password" class="register-link">Esqueci minha senha</a>
 
         <p class="register-prompt">Ainda não possui uma conta?</p>
         <a href="/register/view" class="register-link">Criar conta</a>

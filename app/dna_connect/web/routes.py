@@ -11,7 +11,10 @@ from app.dna_connect.users.service import (
     autenticar_usuario,
     registrar_usuario,
     confirmar_verificacao_email,
-    reenviar_verificacao_email
+    reenviar_verificacao_email,
+    solicitar_redefinicao_senha,
+    validar_token_redefinicao,
+    confirmar_redefinicao_senha
 )
 
 router = APIRouter()
@@ -24,7 +27,8 @@ templates = Jinja2Templates(
 @router.get("/login/view")
 def login_view(
     request: Request,
-    current_user=Depends(get_optional_user)
+    current_user=Depends(get_optional_user),
+    reset: str = ""
 ):
     """
     Renderiza a página de login. Se já autenticado, segue direto ao Dashboard.
@@ -33,10 +37,15 @@ def login_view(
     if current_user:
         return RedirectResponse(url="/dashboard/view", status_code=302)
 
+    sucesso = (
+        "Senha alterada com sucesso. Faça login com sua nova senha."
+        if reset == "ok" else None
+    )
+
     return templates.TemplateResponse(
         request=request,
         name="login.html",
-        context={"erro": None, "email_nao_verificado": None}
+        context={"erro": None, "email_nao_verificado": None, "sucesso": sucesso}
     )
 
 
@@ -63,7 +72,11 @@ async def login_submit(request: Request):
         return templates.TemplateResponse(
             request=request,
             name="login.html",
-            context={"erro": "E-mail ou senha inválidos.", "email_nao_verificado": None},
+            context={
+                "erro": "E-mail ou senha inválidos.",
+                "email_nao_verificado": None,
+                "sucesso": None
+            },
             status_code=401
         )
 
@@ -74,7 +87,8 @@ async def login_submit(request: Request):
             name="login.html",
             context={
                 "erro": "Você precisa verificar seu e-mail antes de entrar.",
-                "email_nao_verificado": email
+                "email_nao_verificado": email,
+                "sucesso": None
             },
             status_code=403
         )
@@ -246,3 +260,113 @@ def verify_email_confirm(request: Request, token: str = ""):
         name="verify_email_success.html",
         context={}
     )
+
+
+@router.get("/forgot-password")
+def forgot_password_view(request: Request):
+    """
+    Página pública de solicitação de recuperação de senha.
+    """
+
+    return templates.TemplateResponse(
+        request=request,
+        name="forgot_password.html",
+        context={"mensagem": None}
+    )
+
+
+@router.post("/forgot-password")
+async def forgot_password_submit(request: Request):
+    """
+    Processa a solicitação de recuperação de senha, reutilizando
+    exatamente o Service responsável (que nunca revela se o e-mail
+    existe, evitando enumeração de contas).
+    """
+
+    form = await request.form()
+    email = form.get("email", "")
+
+    if email:
+        solicitar_redefinicao_senha(email)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="forgot_password.html",
+        context={
+            "mensagem": (
+                "Se existir uma conta cadastrada com este e-mail, "
+                "enviaremos um link para recuperação da senha."
+            )
+        }
+    )
+
+
+@router.get("/reset-password")
+def reset_password_view(request: Request, token: str = ""):
+    """
+    Renderiza o formulário de nova senha, caso o token seja válido.
+    """
+
+    resultado = validar_token_redefinicao(token)
+
+    if resultado["status"] != "valid":
+
+        return templates.TemplateResponse(
+            request=request,
+            name="reset_password_invalid.html",
+            context={}
+        )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="reset_password.html",
+        context={"token": token, "erro": None}
+    )
+
+
+@router.post("/reset-password")
+async def reset_password_submit(request: Request):
+    """
+    Processa a redefinição de senha, reutilizando exatamente o Service
+    responsável (que por sua vez reutiliza o hashing já existente).
+    """
+
+    form = await request.form()
+
+    token = form.get("token", "")
+    password = form.get("password", "")
+    confirm_password = form.get("confirm_password", "")
+
+    resultado = confirmar_redefinicao_senha(
+        token=token,
+        nova_senha=password,
+        confirmar_senha=confirm_password
+    )
+
+    if resultado["status"] in ("invalid", "expired"):
+
+        return templates.TemplateResponse(
+            request=request,
+            name="reset_password_invalid.html",
+            context={}
+        )
+
+    if resultado["status"] == "password_mismatch":
+
+        return templates.TemplateResponse(
+            request=request,
+            name="reset_password.html",
+            context={"token": token, "erro": "As senhas não coincidem."},
+            status_code=400
+        )
+
+    if resultado["status"] == "password_required":
+
+        return templates.TemplateResponse(
+            request=request,
+            name="reset_password.html",
+            context={"token": token, "erro": "Informe a nova senha e a confirmação."},
+            status_code=400
+        )
+
+    return RedirectResponse(url="/login/view?reset=ok", status_code=302)
