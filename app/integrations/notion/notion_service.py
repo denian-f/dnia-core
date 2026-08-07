@@ -18,6 +18,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from app.integrations.notion import config
 from app.integrations.notion.notion_client import NotionClient
+from app.integrations.notion.whatsapp_link import montar_link_whatsapp
 
 
 # =====================================================
@@ -101,6 +102,7 @@ _PROPRIEDADES_PADRAO: Dict[str, Any] = {
     "Primeiro Contato": {"date": {}},
     "Última Atualização": {"date": {}},
     "Matrícula": {"rich_text": {}},
+    "WhatsApp": {"url": {}},
 }
 
 
@@ -129,6 +131,7 @@ class NotionService:
 
             if self.data_source_id:
                 # Já temos tudo o que precisamos, de execuções anteriores.
+                self._garantir_propriedades_atualizadas()
                 return self.data_source_id
 
             # Database já existia no .env, mas ainda não tínhamos o
@@ -140,6 +143,8 @@ class NotionService:
             config.set_env_variable("NOTION_DATA_SOURCE_ID", data_source_id)
             config.reload()
             self.data_source_id = data_source_id
+
+            self._garantir_propriedades_atualizadas()
 
             return data_source_id
 
@@ -164,6 +169,27 @@ class NotionService:
         print(f"Database '{config.NOTION_DATABASE_TITLE}' criada. IDs salvos no .env.")
 
         return novo_data_source_id
+
+    def _garantir_propriedades_atualizadas(self) -> None:
+        """
+        Reaplica _PROPRIEDADES_PADRAO sobre o data source já existente.
+
+        A API do Notion faz merge por nome de propriedade nesse PATCH:
+        cria as que ainda não existem na Database (ex.: quando uma
+        propriedade nova, como "WhatsApp", é adicionada aqui no código
+        depois que a Database já tinha sido criada) e não altera nem
+        remove as demais. Best-effort: se falhar, não interrompe a
+        sincronização — a Database continua funcionando com o schema
+        que já tinha.
+        """
+
+        try:
+            self.client.update_data_source(self.data_source_id, _PROPRIEDADES_PADRAO)
+        except Exception as erro:
+            print(
+                "Aviso: não foi possível atualizar o schema da Database "
+                f"no Notion ({erro}). A sincronização continua normalmente."
+            )
 
     def _resolver_pagina_pai(self) -> str:
         """
@@ -218,6 +244,9 @@ class NotionService:
     def _telefone(self, valor: Optional[str]) -> Dict[str, Any]:
         return {"phone_number": valor or None}
 
+    def _url(self, valor: Optional[str]) -> Dict[str, Any]:
+        return {"url": valor or None}
+
     def _select(self, valor: Optional[str]) -> Dict[str, Any]:
         if not valor:
             return {"select": None}
@@ -247,6 +276,9 @@ class NotionService:
             "Primeiro Contato": self._data(record.data_primeiro_contato),
             "Última Atualização": self._data(record.ultima_atualizacao),
             "Matrícula": self._texto(record.matricula),
+            "WhatsApp": self._url(
+                montar_link_whatsapp(record.nome, record.telefone_assertivo)
+            ),
         }
 
     # =====================================================

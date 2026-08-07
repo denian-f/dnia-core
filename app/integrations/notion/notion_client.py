@@ -102,6 +102,23 @@ class NotionClient:
 
         return data_sources[0]["id"]
 
+    def update_data_source(
+        self,
+        data_source_id: str,
+        properties: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """
+        Faz merge do schema informado sobre o data source existente:
+        propriedades com nomes novos são criadas, as já existentes não
+        são alteradas nem removidas. Usado para adicionar propriedades
+        novas (ex.: "WhatsApp") a uma Database já criada anteriormente.
+        """
+
+        return self._client.data_sources.update(
+            data_source_id=data_source_id,
+            properties=properties,
+        )
+
     def query_data_source(
         self,
         data_source_id: str,
