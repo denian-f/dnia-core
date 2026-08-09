@@ -27,6 +27,9 @@ body {
 }
 
 .edit-form {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
     background-color: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 6px;

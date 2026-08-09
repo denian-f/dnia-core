@@ -10,6 +10,33 @@ class Card:
     code: str
     target_url: Optional[str]
     activated: bool
+    mode: str
     owner_id: Optional[int]
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass
+class CardBusinessProfile:
+
+    id: int
+    card_id: int
+    name: Optional[str]
+    professional_title: Optional[str]
+    company: Optional[str]
+    profile_photo: Optional[str]
+    whatsapp: Optional[str]
+    phone: Optional[str]
+    email: Optional[str]
+    instagram: Optional[str]
+    linkedin: Optional[str]
+    facebook: Optional[str]
+    tiktok: Optional[str]
+    youtube: Optional[str]
+    website: Optional[str]
+    pix_key: Optional[str]
+    pix_key_type: Optional[str]
+    bio: Optional[str]
+    background_color: Optional[str]
     created_at: datetime
     updated_at: datetime

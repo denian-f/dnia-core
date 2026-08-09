@@ -74,6 +74,34 @@ class CardRepository:
 
         self.db.commit()
 
+    def adicionar_coluna_mode(self):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            ALTER TABLE cards
+            ADD COLUMN IF NOT EXISTS mode VARCHAR(20) NOT NULL DEFAULT 'custom_link'
+
+        """)
+
+        cursor.execute("""
+
+            DO $$
+            BEGIN
+
+                ALTER TABLE cards
+                ADD CONSTRAINT chk_cards_mode
+                CHECK (mode IN ('custom_link', 'business_card'));
+
+            EXCEPTION
+                WHEN duplicate_object THEN NULL;
+            END $$;
+
+        """)
+
+        self.db.commit()
+
     def seed_cartao_teste(self):
 
         cursor = self.db.cursor()
@@ -118,6 +146,7 @@ class CardRepository:
                 code,
                 target_url,
                 activated,
+                mode,
                 owner_id,
                 created_at,
                 updated_at
@@ -138,9 +167,10 @@ class CardRepository:
             code=linha[1],
             target_url=linha[2],
             activated=linha[3],
-            owner_id=linha[4],
-            created_at=linha[5],
-            updated_at=linha[6]
+            mode=linha[4],
+            owner_id=linha[5],
+            created_at=linha[6],
+            updated_at=linha[7]
         )
 
     def listar_por_owner(self, owner_id: int):
@@ -155,6 +185,7 @@ class CardRepository:
                 code,
                 target_url,
                 activated,
+                mode,
                 owner_id,
                 created_at,
                 updated_at
@@ -173,9 +204,10 @@ class CardRepository:
                 code=linha[1],
                 target_url=linha[2],
                 activated=linha[3],
-                owner_id=linha[4],
-                created_at=linha[5],
-                updated_at=linha[6]
+                mode=linha[4],
+                owner_id=linha[5],
+                created_at=linha[6],
+                updated_at=linha[7]
             )
             for linha in cursor.fetchall()
         ]
@@ -229,7 +261,37 @@ class CardRepository:
 
         self.db.commit()
 
+    def atualizar_modo(self, code: str, mode: str):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            UPDATE cards
+
+            SET
+
+                mode = %s,
+                updated_at = NOW()
+
+            WHERE code = %s
+
+        """, (
+
+            mode,
+            code
+
+        ))
+
+        self.db.commit()
+
     def remover_associacao(self, code: str):
+        """
+        Remoção lógica: desvincula o cartão do dono atual e devolve o
+        modo para custom_link (o cartão pode ser reativado por outro
+        proprietário futuramente, e não deve herdar mode/target_url de
+        quem o usou antes).
+        """
 
         cursor = self.db.cursor()
 
@@ -242,6 +304,7 @@ class CardRepository:
                 owner_id = NULL,
                 activated = FALSE,
                 target_url = NULL,
+                mode = 'custom_link',
                 updated_at = NOW()
 
             WHERE code = %s

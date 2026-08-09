@@ -6,14 +6,217 @@
     <title>Editar Cartão - DNA Connect</title>
     <link rel="stylesheet" href="/dashboard/static/css/nav.css">
     <link rel="stylesheet" href="/cards/static/css/edit_card.css">
+    <link rel="stylesheet" href="/cards/static/css/business_card_editor.css">
+    <link rel="stylesheet" href="/cards/static/css/business_card.css">
 </head>
 <body>
 
     {% include "_nav.html" %}
 
-    <main class="edit-container">
+    <main class="editor-page">
 
-        <h1 class="edit-title">Editar Cartão</h1>
+        <h1 class="edit-title">Editar Cartão — {{ cartao.code }}</h1>
+
+        {% if erro %}
+        <p class="edit-message edit-error">{{ erro }}</p>
+        {% endif %}
+
+        {% if sucesso %}
+        <p class="edit-message edit-success">{{ sucesso }}</p>
+        {% endif %}
+
+        <section class="mode-selector">
+
+            <form method="post" action="/cards/{{ cartao.code }}/mode">
+                <input type="hidden" name="mode" value="custom_link">
+                <button type="submit" class="mode-option {{ 'mode-option-active' if cartao.mode == 'custom_link' else '' }}">
+                    <span class="mode-option-title">Link personalizado</span>
+                    <span class="mode-option-desc">Direcione seu cartão para qualquer link.</span>
+                </button>
+            </form>
+
+            <form method="post" action="/cards/{{ cartao.code }}/mode">
+                <input type="hidden" name="mode" value="business_card">
+                <button type="submit" class="mode-option {{ 'mode-option-active' if cartao.mode == 'business_card' else '' }}">
+                    <span class="mode-option-title">Cartão de visita</span>
+                    <span class="mode-option-desc">Crie uma página profissional com seus contatos e informações.</span>
+                </button>
+            </form>
+
+        </section>
+
+        <section class="physical-card-section">
+
+            <h2 class="physical-card-title">Seu cartão digital</h2>
+
+            <div class="physical-card-content">
+
+                <div class="physical-card-link">
+                    <span class="physical-card-label">Link</span>
+                    <code class="physical-card-url">{{ url_cartao_fisico }}</code>
+                    <a href="{{ url_cartao_fisico }}" target="_blank" rel="noopener noreferrer" class="btn-view-card">Abrir cartão</a>
+                    <p class="physical-card-hint">
+                        É este link que deve ser gravado no chip NFC e codificado no QR Code do cartão físico —
+                        funciona tanto para o modo Link personalizado quanto para o Cartão de visita.
+                    </p>
+                </div>
+
+                <div class="physical-card-qr">
+                    <span class="physical-card-label">QR Code</span>
+                    <img src="{{ url_qr_cartao }}" alt="QR Code do cartão {{ cartao.code }}" class="physical-card-qr-img">
+                    <a href="{{ url_qr_cartao }}" download class="btn-view-card">Baixar QR Code</a>
+                </div>
+
+            </div>
+
+        </section>
+
+        {% if cartao.mode == "business_card" %}
+
+        <div class="bc-public-link">
+            <span>Endereço público: <code>{{ url_cartao_visita }}</code></span>
+            <a href="{{ url_cartao_visita }}" target="_blank" rel="noopener noreferrer" class="btn-view-card">Ver cartão</a>
+        </div>
+
+        <div class="editor-layout">
+
+            <form class="business-profile-form" method="post" action="/cards/{{ cartao.code }}/business-profile" enctype="multipart/form-data" id="bc-form">
+
+                <fieldset>
+                    <legend>Informações principais</legend>
+
+                    <label for="f-name">Nome</label>
+                    <input type="text" id="f-name" name="name" value="{{ perfil.name or '' }}">
+
+                    <label for="f-professional_title">Cargo / profissão</label>
+                    <input type="text" id="f-professional_title" name="professional_title" value="{{ perfil.professional_title or '' }}">
+
+                    <label for="f-company">Empresa</label>
+                    <input type="text" id="f-company" name="company" value="{{ perfil.company or '' }}">
+
+                    <label for="f-bio">Bio</label>
+                    <textarea id="f-bio" name="bio" rows="3">{{ perfil.bio or '' }}</textarea>
+
+                    <label>Foto de perfil</label>
+                    <div class="photo-field">
+                        <div class="photo-preview">
+                            {% if foto_atual %}
+                            <img src="{{ foto_atual }}" alt="Foto atual" class="photo-preview-img">
+                            {% else %}
+                            <div class="photo-preview-placeholder">{{ (perfil.name[0] | upper) if perfil and perfil.name else "?" }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="photo-field-actions">
+                            <input type="file" id="f-profile_photo_file" name="profile_photo_file" accept="image/jpeg,image/png,image/webp">
+                            <span class="photo-field-hint">JPG, PNG ou WEBP, até 5&nbsp;MB.</span>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Contatos</legend>
+
+                    <label for="f-whatsapp">WhatsApp</label>
+                    <input type="text" id="f-whatsapp" name="whatsapp" value="{{ perfil.whatsapp or '' }}" placeholder="+55 11 99999-9999">
+
+                    <label for="f-phone">Telefone</label>
+                    <input type="text" id="f-phone" name="phone" value="{{ perfil.phone or '' }}">
+
+                    <label for="f-email">E-mail</label>
+                    <input type="email" id="f-email" name="email" value="{{ perfil.email or '' }}">
+                </fieldset>
+
+                <fieldset>
+                    <legend>Redes sociais</legend>
+
+                    <label for="f-instagram">Instagram</label>
+                    <input type="text" id="f-instagram" name="instagram" value="{{ perfil.instagram or '' }}" placeholder="@seuusuario">
+
+                    <label for="f-linkedin">LinkedIn</label>
+                    <input type="text" id="f-linkedin" name="linkedin" value="{{ perfil.linkedin or '' }}">
+
+                    <label for="f-facebook">Facebook</label>
+                    <input type="text" id="f-facebook" name="facebook" value="{{ perfil.facebook or '' }}">
+
+                    <label for="f-tiktok">TikTok</label>
+                    <input type="text" id="f-tiktok" name="tiktok" value="{{ perfil.tiktok or '' }}">
+
+                    <label for="f-youtube">YouTube</label>
+                    <input type="text" id="f-youtube" name="youtube" value="{{ perfil.youtube or '' }}">
+
+                    <label for="f-website">Website</label>
+                    <input type="text" id="f-website" name="website" value="{{ perfil.website or '' }}">
+                </fieldset>
+
+                <fieldset>
+                    <legend>Pix</legend>
+
+                    <label for="f-pix_key">Chave Pix</label>
+                    <input type="text" id="f-pix_key" name="pix_key" value="{{ perfil.pix_key or '' }}">
+
+                    <label for="f-pix_key_type">Tipo da chave Pix</label>
+                    <input type="text" id="f-pix_key_type" name="pix_key_type" value="{{ perfil.pix_key_type or '' }}" placeholder="CPF, e-mail, telefone, aleatória...">
+                </fieldset>
+
+                <fieldset>
+                    <legend>Aparência</legend>
+
+                    <label for="f-background_color">Cor de fundo</label>
+                    <div class="color-field">
+                        <input type="color" id="f-background_color_picker" value="{{ perfil.background_color or '#05070d' }}">
+                        <input type="text" id="f-background_color" name="background_color" value="{{ perfil.background_color or '' }}" placeholder="#05070d">
+                    </div>
+                </fieldset>
+
+                <div class="edit-actions">
+                    <button type="submit" class="btn-save">Salvar</button>
+                    <a href="/dashboard/view" class="btn-cancel">Cancelar</a>
+                </div>
+
+            </form>
+
+            {% if foto_atual %}
+            <form method="post" action="/cards/{{ cartao.code }}/business-profile/photo/remove" class="remove-photo-form">
+                <button type="submit" class="btn-remove-photo" onclick="return confirm('Remover a foto atual?')">Remover foto</button>
+            </form>
+            {% endif %}
+
+            <aside class="preview-panel" id="preview-wrapper">
+                <span class="preview-panel-label">Prévia</span>
+                <div class="bc-card" id="bc-preview" style="background-color: {{ perfil.background_color or '#05070d' }};">
+
+                    <div class="bc-avatar-wrap">
+                        {% if foto_atual %}
+                        <img class="bc-avatar" id="preview-avatar-img" src="{{ foto_atual }}" alt="Foto de perfil">
+                        {% else %}
+                        <div class="bc-avatar bc-avatar-placeholder" id="preview-avatar">?</div>
+                        {% endif %}
+                    </div>
+
+                    <h2 class="bc-name" id="preview-name" style="display:none;"></h2>
+                    <p class="bc-title" id="preview-title" style="display:none;"></p>
+                    <span class="bc-company" id="preview-company" style="display:none;"></span>
+
+                    <section class="bc-bio" id="preview-bio-section" style="display:none;">
+                        <p id="preview-bio"></p>
+                    </section>
+
+                    <section class="bc-contacts" id="preview-contacts" style="display:none;">
+                        <span class="bc-btn bc-btn-primary" id="preview-whatsapp" style="display:none;">Chamar no WhatsApp</span>
+                        <span class="bc-btn" id="preview-instagram" style="display:none;">Instagram</span>
+                    </section>
+
+                    <section class="bc-pix" id="preview-pix-section" style="display:none;">
+                        <span class="bc-pix-label">Chave Pix</span>
+                        <span class="bc-pix-value" id="preview-pix"></span>
+                    </section>
+
+                </div>
+            </aside>
+
+        </div>
+
+        {% else %}
 
         <form class="edit-form" method="post" action="/cards/{{ cartao.code }}/edit">
 
@@ -21,24 +224,104 @@
             <input type="text" id="code" value="{{ cartao.code }}" disabled>
 
             <label for="target_url">Target URL</label>
-            <input type="text" id="target_url" name="target_url" value="{{ cartao.target_url }}" required>
+            <input type="text" id="target_url" name="target_url" value="{{ cartao.target_url or '' }}" required>
 
             <div class="edit-actions">
                 <button type="submit" class="btn-save">Salvar</button>
                 <a href="/dashboard/view" class="btn-cancel">Cancelar</a>
             </div>
 
-            {% if erro %}
-            <p class="edit-message edit-error">{{ erro }}</p>
-            {% endif %}
-
-            {% if sucesso %}
-            <p class="edit-message edit-success">{{ sucesso }}</p>
-            {% endif %}
-
         </form>
 
+        {% endif %}
+
     </main>
+
+    {% if cartao.mode == "business_card" %}
+    <script>
+        (function () {
+            var form = document.getElementById("bc-form");
+            var previewWrapper = document.getElementById("preview-wrapper");
+            var preview = document.getElementById("bc-preview");
+            var colorPicker = document.getElementById("f-background_color_picker");
+            var colorText = document.getElementById("f-background_color");
+
+            function paraHex6(hex) {
+                hex = hex.replace("#", "");
+                if (hex.length === 3) {
+                    hex = hex.split("").map(function (c) { return c + c; }).join("");
+                }
+                return hex;
+            }
+
+            function textoClaro(hex) {
+                var valor = paraHex6(hex);
+                var r = parseInt(valor.substring(0, 2), 16);
+                var g = parseInt(valor.substring(2, 4), 16);
+                var b = parseInt(valor.substring(4, 6), 16);
+                var luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                return luminancia < 0.6;
+            }
+
+            function mostrar(el, condicao) {
+                el.style.display = condicao ? "" : "none";
+            }
+
+            function atualizarPreview() {
+                var nome = form.name.value.trim();
+                var cargo = form.professional_title.value.trim();
+                var empresa = form.company.value.trim();
+                var bio = form.bio.value.trim();
+                var whatsapp = form.whatsapp.value.trim();
+                var instagram = form.instagram.value.trim();
+                var pix = form.pix_key.value.trim();
+                var cor = (colorText.value || "").trim() || "#05070d";
+
+                var elAvatarPlaceholder = document.getElementById("preview-avatar");
+                if (elAvatarPlaceholder) {
+                    elAvatarPlaceholder.textContent = nome ? nome[0].toUpperCase() : "?";
+                }
+
+                var elNome = document.getElementById("preview-name");
+                elNome.textContent = nome;
+                mostrar(elNome, nome);
+
+                var elTitulo = document.getElementById("preview-title");
+                elTitulo.textContent = cargo;
+                mostrar(elTitulo, cargo);
+
+                var elEmpresa = document.getElementById("preview-company");
+                elEmpresa.textContent = empresa;
+                mostrar(elEmpresa, empresa);
+
+                document.getElementById("preview-bio").textContent = bio;
+                mostrar(document.getElementById("preview-bio-section"), bio);
+
+                mostrar(document.getElementById("preview-whatsapp"), whatsapp);
+                mostrar(document.getElementById("preview-instagram"), instagram);
+                mostrar(document.getElementById("preview-contacts"), whatsapp || instagram);
+
+                document.getElementById("preview-pix").textContent = pix;
+                mostrar(document.getElementById("preview-pix-section"), pix);
+
+                if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(cor)) {
+                    preview.style.backgroundColor = cor;
+                    colorPicker.value = "#" + paraHex6(cor);
+                    previewWrapper.className = "preview-panel " + (textoClaro(cor) ? "text-light" : "text-dark");
+                }
+            }
+
+            form.addEventListener("input", atualizarPreview);
+
+            colorPicker.addEventListener("input", function () {
+                colorText.value = colorPicker.value;
+                atualizarPreview();
+            });
+
+            atualizarPreview();
+        })();
+    </script>
+    {% endif %}
 
 </body>
 </html>
