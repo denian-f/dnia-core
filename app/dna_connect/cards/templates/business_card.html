@@ -6,7 +6,7 @@
     <title>{{ nome or "Cartão de visita" }} - DNA Connect</title>
     <link rel="stylesheet" href="/cards/static/css/business_card.css">
 </head>
-<body class="{{ 'text-light' if texto_claro else 'text-dark' }}" style="background-color: {{ cor_fundo }};">
+<body class="{{ 'text-light' if texto_claro else 'text-dark' }}" style="background-color: {{ cor_fundo }}; --dc-accent: {{ cor_destaque }}; --dc-accent-soft: {{ cor_destaque_soft }}; --dc-accent-text: {{ cor_destaque_texto }};">
 
     <main class="bc-card">
 
@@ -28,7 +28,7 @@
         </section>
         {% endif %}
 
-        {% if whatsapp_link or telefone_link or email_link %}
+        {% if whatsapp_link or telefone_link or email_link or google_maps_link %}
         <section class="bc-contacts">
             {% if whatsapp_link %}
             <a class="bc-btn bc-btn-primary" href="{{ whatsapp_link }}" target="_blank" rel="noopener noreferrer">Chamar no WhatsApp</a>
@@ -38,6 +38,9 @@
             {% endif %}
             {% if email_link %}
             <a class="bc-btn" href="{{ email_link }}">Enviar e-mail</a>
+            {% endif %}
+            {% if google_maps_link %}
+            <a class="bc-btn" href="{{ google_maps_link }}" target="_blank" rel="noopener noreferrer">Ver localização</a>
             {% endif %}
         </section>
         {% endif %}

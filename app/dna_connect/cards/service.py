@@ -39,6 +39,7 @@ def init_cards_db():
 
         perfil_repo.criar_tabela()
         perfil_repo.adicionar_colunas_foto_upload()
+        perfil_repo.adicionar_colunas_personalizacao()
 
     finally:
 

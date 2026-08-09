@@ -1,3 +1,19 @@
+/*
+ * business_card.css também é carregado nesta página (para reaproveitar
+ * as classes .bc-* na prévia) e define regras de `body` pensadas para
+ * a página pública (fundo escuro, display:flex centralizado). Este
+ * reset garante que a página do editor mantenha o fundo claro e o
+ * layout padrão das páginas autenticadas do DNA Connect.
+ */
+body {
+    background-color: #f4f4f5;
+    color: #1a1a1a;
+    display: block;
+    justify-content: normal;
+    padding: 0;
+    min-height: auto;
+}
+
 .editor-page {
     width: 100%;
     max-width: 960px;
@@ -119,27 +135,6 @@
 
 }
 
-.bc-public-link {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    padding: 12px 16px;
-    margin: 0 0 20px 0;
-    font-size: 13px;
-    color: #4b5563;
-}
-
-.bc-public-link code {
-    background-color: #f3f4f6;
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-
 .btn-view-card {
     padding: 8px 14px;
     background-color: #111827;
@@ -256,9 +251,15 @@
     font-size: 13px;
 }
 
-.photo-field-hint {
+.photo-field-hint,
+.field-hint {
     font-size: 12px;
     color: #6b7280;
+}
+
+.field-hint {
+    display: block;
+    margin-top: 4px;
 }
 
 .remove-photo-form {

@@ -22,7 +22,9 @@ CAMPOS_PERFIL = [
     "pix_key",
     "pix_key_type",
     "bio",
-    "background_color"
+    "background_color",
+    "google_maps_url",
+    "accent_color"
 ]
 
 
@@ -101,6 +103,33 @@ class CardBusinessProfileRepository:
 
             ALTER TABLE card_business_profiles
             ADD COLUMN IF NOT EXISTS profile_photo_content_type VARCHAR(50)
+
+        """)
+
+        self.db.commit()
+
+    def adicionar_colunas_personalizacao(self):
+        """
+        Colunas de personalização adicionadas na Sprint 31: link do
+        Google Maps e cor de destaque (accent_color) dos botões/
+        elementos do cartão de visita. Opcionais/NULL — cartões
+        antigos continuam funcionando exatamente como antes (fallback
+        para o azul padrão no accent_color, botão de mapa ausente).
+        """
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            ALTER TABLE card_business_profiles
+            ADD COLUMN IF NOT EXISTS google_maps_url TEXT
+
+        """)
+
+        cursor.execute("""
+
+            ALTER TABLE card_business_profiles
+            ADD COLUMN IF NOT EXISTS accent_color TEXT
 
         """)
 

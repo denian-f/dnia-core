@@ -38,5 +38,7 @@ class CardBusinessProfile:
     pix_key_type: Optional[str]
     bio: Optional[str]
     background_color: Optional[str]
+    google_maps_url: Optional[str]
+    accent_color: Optional[str]
     created_at: datetime
     updated_at: datetime

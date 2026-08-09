@@ -6,8 +6,8 @@
     <title>Editar Cartão - DNA Connect</title>
     <link rel="stylesheet" href="/dashboard/static/css/nav.css">
     <link rel="stylesheet" href="/cards/static/css/edit_card.css">
-    <link rel="stylesheet" href="/cards/static/css/business_card_editor.css">
     <link rel="stylesheet" href="/cards/static/css/business_card.css">
+    <link rel="stylesheet" href="/cards/static/css/business_card_editor.css">
 </head>
 <body>
 
@@ -72,11 +72,6 @@
         </section>
 
         {% if cartao.mode == "business_card" %}
-
-        <div class="bc-public-link">
-            <span>Endereço público: <code>{{ url_cartao_visita }}</code></span>
-            <a href="{{ url_cartao_visita }}" target="_blank" rel="noopener noreferrer" class="btn-view-card">Ver cartão</a>
-        </div>
 
         <div class="editor-layout">
 
@@ -149,6 +144,14 @@
                 </fieldset>
 
                 <fieldset>
+                    <legend>Localização</legend>
+
+                    <label for="f-google_maps_url">Google Maps</label>
+                    <input type="text" id="f-google_maps_url" name="google_maps_url" value="{{ perfil.google_maps_url or '' }}" placeholder="https://maps.google.com/...">
+                    <span class="field-hint">Adicione o link da localização do seu negócio ou endereço.</span>
+                </fieldset>
+
+                <fieldset>
                     <legend>Pix</legend>
 
                     <label for="f-pix_key">Chave Pix</label>
@@ -165,6 +168,12 @@
                     <div class="color-field">
                         <input type="color" id="f-background_color_picker" value="{{ perfil.background_color or '#05070d' }}">
                         <input type="text" id="f-background_color" name="background_color" value="{{ perfil.background_color or '' }}" placeholder="#05070d">
+                    </div>
+
+                    <label for="f-accent_color">Cor dos botões / destaques</label>
+                    <div class="color-field">
+                        <input type="color" id="f-accent_color_picker" value="{{ perfil.accent_color or '#3b82f6' }}">
+                        <input type="text" id="f-accent_color" name="accent_color" value="{{ perfil.accent_color or '' }}" placeholder="#3b82f6">
                     </div>
                 </fieldset>
 
@@ -183,7 +192,7 @@
 
             <aside class="preview-panel" id="preview-wrapper">
                 <span class="preview-panel-label">Prévia</span>
-                <div class="bc-card" id="bc-preview" style="background-color: {{ perfil.background_color or '#05070d' }};">
+                <div class="bc-card" id="bc-preview" style="background-color: {{ perfil.background_color or '#05070d' }}; --dc-accent: {{ perfil.accent_color or '#3b82f6' }};">
 
                     <div class="bc-avatar-wrap">
                         {% if foto_atual %}
@@ -203,13 +212,40 @@
 
                     <section class="bc-contacts" id="preview-contacts" style="display:none;">
                         <span class="bc-btn bc-btn-primary" id="preview-whatsapp" style="display:none;">Chamar no WhatsApp</span>
-                        <span class="bc-btn" id="preview-instagram" style="display:none;">Instagram</span>
+                        <span class="bc-btn" id="preview-phone" style="display:none;">Ligar</span>
+                        <span class="bc-btn" id="preview-email" style="display:none;">Enviar e-mail</span>
+                        <span class="bc-btn" id="preview-maps" style="display:none;">Ver localização</span>
+                    </section>
+
+                    <section class="bc-social" id="preview-social" style="display:none;">
+                        <span class="bc-social-icon" id="preview-instagram" style="display:none;">
+                            <svg viewBox="0 0 24 24"><path d="M12 2c2.7 0 3 .01 4.1.06 1.1.05 1.85.23 2.5.48.68.27 1.26.62 1.83 1.19.57.57.92 1.15 1.19 1.83.25.65.43 1.4.48 2.5.05 1.1.06 1.4.06 4.1s-.01 3-.06 4.1c-.05 1.1-.23 1.85-.48 2.5a4.9 4.9 0 0 1-1.19 1.83 4.9 4.9 0 0 1-1.83 1.19c-.65.25-1.4.43-2.5.48-1.1.05-1.4.06-4.1.06s-3-.01-4.1-.06c-1.1-.05-1.85-.23-2.5-.48a4.9 4.9 0 0 1-1.83-1.19 4.9 4.9 0 0 1-1.19-1.83c-.25-.65-.43-1.4-.48-2.5C2.01 15 2 14.7 2 12s.01-3 .06-4.1c.05-1.1.23-1.85.48-2.5.27-.68.62-1.26 1.19-1.83A4.9 4.9 0 0 1 5.56 2.4c.65-.25 1.4-.43 2.5-.48C9.16 2.01 9.46 2 12 2zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.2-8.4a1.17 1.17 0 1 1 0-2.34 1.17 1.17 0 0 1 0 2.34z"/></svg>
+                        </span>
+                        <span class="bc-social-icon" id="preview-linkedin" style="display:none;">
+                            <svg viewBox="0 0 24 24"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3V9zm7 0h3.8v1.7h.05c.53-.98 1.83-2 3.77-2 4.03 0 4.78 2.53 4.78 5.82V21h-4v-5.5c0-1.3-.02-3-1.87-3-1.87 0-2.16 1.4-2.16 2.9V21h-4V9z"/></svg>
+                        </span>
+                        <span class="bc-social-icon" id="preview-facebook" style="display:none;">
+                            <svg viewBox="0 0 24 24"><path d="M13.5 21v-7.5h2.5l.4-3H13.5V8.4c0-.87.24-1.46 1.5-1.46h1.6V4.3c-.28-.04-1.23-.12-2.34-.12-2.31 0-3.9 1.4-3.9 3.98V10.5H8v3h2.36V21h3.14z"/></svg>
+                        </span>
+                        <span class="bc-social-icon" id="preview-tiktok" style="display:none;">
+                            <svg viewBox="0 0 24 24"><path d="M16.5 2h-3v13.2a2.8 2.8 0 1 1-2-2.68V9.4a5.8 5.8 0 1 0 5 5.75V8.9a7.4 7.4 0 0 0 4.5 1.53V7.4a4.4 4.4 0 0 1-4.5-4.4z"/></svg>
+                        </span>
+                        <span class="bc-social-icon" id="preview-youtube" style="display:none;">
+                            <svg viewBox="0 0 24 24"><path d="M23 12s0-3.4-.43-5a2.9 2.9 0 0 0-2.05-2.05C18.9 4.5 12 4.5 12 4.5s-6.9 0-8.52.45A2.9 2.9 0 0 0 1.43 7C1 8.6 1 12 1 12s0 3.4.43 5A2.9 2.9 0 0 0 3.48 19c1.62.45 8.52.45 8.52.45s6.9 0 8.52-.45A2.9 2.9 0 0 0 22.57 17c.43-1.6.43-5 .43-5zM9.8 15.5v-7l6 3.5-6 3.5z"/></svg>
+                        </span>
+                        <span class="bc-social-icon" id="preview-website" style="display:none;">
+                            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.93 6H15.9a15.7 15.7 0 0 0-1.28-4.24A8.03 8.03 0 0 1 18.93 8zM12 4.06c.8 1.1 1.55 2.5 2 3.94H10c.45-1.44 1.2-2.84 2-3.94zM4.26 14a8.1 8.1 0 0 1 0-4h3.4a17.6 17.6 0 0 0 0 4h-3.4zm.81 2h3.03c.32 1.6.85 3 1.42 4.24A8.03 8.03 0 0 1 5.07 16zm3.03-8H5.07a8.03 8.03 0 0 1 4.45-4.24C9 5 8.47 6.4 8.15 8zM10 16h4c-.45 1.44-1.2 2.84-2 3.94A15.9 15.9 0 0 1 10 16zm-.34-2a15.6 15.6 0 0 1 0-4h4.68a15.6 15.6 0 0 1 0 4H9.66zm4.96 6.24c.57-1.24 1.1-2.64 1.42-4.24h3.03a8.03 8.03 0 0 1-4.45 4.24zM16.34 14a17.6 17.6 0 0 0 0-4h3.4a8.1 8.1 0 0 1 0 4h-3.4z"/></svg>
+                        </span>
                     </section>
 
                     <section class="bc-pix" id="preview-pix-section" style="display:none;">
                         <span class="bc-pix-label">Chave Pix</span>
                         <span class="bc-pix-value" id="preview-pix"></span>
                     </section>
+
+                    <footer class="bc-footer">
+                        <span>DNA Connect</span>
+                    </footer>
 
                 </div>
             </aside>
@@ -243,8 +279,13 @@
             var form = document.getElementById("bc-form");
             var previewWrapper = document.getElementById("preview-wrapper");
             var preview = document.getElementById("bc-preview");
-            var colorPicker = document.getElementById("f-background_color_picker");
-            var colorText = document.getElementById("f-background_color");
+
+            var bgPicker = document.getElementById("f-background_color_picker");
+            var bgText = document.getElementById("f-background_color");
+            var accentPicker = document.getElementById("f-accent_color_picker");
+            var accentText = document.getElementById("f-accent_color");
+
+            var CAMPOS_HEX = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
 
             function paraHex6(hex) {
                 hex = hex.replace("#", "");
@@ -267,54 +308,83 @@
                 el.style.display = condicao ? "" : "none";
             }
 
+            function textoOpcional(el, valor) {
+                el.textContent = valor;
+                mostrar(el, valor);
+            }
+
             function atualizarPreview() {
                 var nome = form.name.value.trim();
                 var cargo = form.professional_title.value.trim();
                 var empresa = form.company.value.trim();
                 var bio = form.bio.value.trim();
                 var whatsapp = form.whatsapp.value.trim();
+                var phone = form.phone.value.trim();
+                var email = form.email.value.trim();
+                var maps = form.google_maps_url.value.trim();
                 var instagram = form.instagram.value.trim();
+                var linkedin = form.linkedin.value.trim();
+                var facebook = form.facebook.value.trim();
+                var tiktok = form.tiktok.value.trim();
+                var youtube = form.youtube.value.trim();
+                var website = form.website.value.trim();
                 var pix = form.pix_key.value.trim();
-                var cor = (colorText.value || "").trim() || "#05070d";
+                var corFundo = (bgText.value || "").trim() || "#05070d";
+                var corDestaque = (accentText.value || "").trim() || "#3b82f6";
 
                 var elAvatarPlaceholder = document.getElementById("preview-avatar");
                 if (elAvatarPlaceholder) {
                     elAvatarPlaceholder.textContent = nome ? nome[0].toUpperCase() : "?";
                 }
 
-                var elNome = document.getElementById("preview-name");
-                elNome.textContent = nome;
-                mostrar(elNome, nome);
-
-                var elTitulo = document.getElementById("preview-title");
-                elTitulo.textContent = cargo;
-                mostrar(elTitulo, cargo);
-
-                var elEmpresa = document.getElementById("preview-company");
-                elEmpresa.textContent = empresa;
-                mostrar(elEmpresa, empresa);
+                textoOpcional(document.getElementById("preview-name"), nome);
+                textoOpcional(document.getElementById("preview-title"), cargo);
+                textoOpcional(document.getElementById("preview-company"), empresa);
 
                 document.getElementById("preview-bio").textContent = bio;
                 mostrar(document.getElementById("preview-bio-section"), bio);
 
                 mostrar(document.getElementById("preview-whatsapp"), whatsapp);
+                mostrar(document.getElementById("preview-phone"), phone);
+                mostrar(document.getElementById("preview-email"), email);
+                mostrar(document.getElementById("preview-maps"), maps);
+                mostrar(document.getElementById("preview-contacts"), whatsapp || phone || email || maps);
+
                 mostrar(document.getElementById("preview-instagram"), instagram);
-                mostrar(document.getElementById("preview-contacts"), whatsapp || instagram);
+                mostrar(document.getElementById("preview-linkedin"), linkedin);
+                mostrar(document.getElementById("preview-facebook"), facebook);
+                mostrar(document.getElementById("preview-tiktok"), tiktok);
+                mostrar(document.getElementById("preview-youtube"), youtube);
+                mostrar(document.getElementById("preview-website"), website);
+                mostrar(document.getElementById("preview-social"), instagram || linkedin || facebook || tiktok || youtube || website);
 
                 document.getElementById("preview-pix").textContent = pix;
                 mostrar(document.getElementById("preview-pix-section"), pix);
 
-                if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(cor)) {
-                    preview.style.backgroundColor = cor;
-                    colorPicker.value = "#" + paraHex6(cor);
-                    previewWrapper.className = "preview-panel " + (textoClaro(cor) ? "text-light" : "text-dark");
+                if (CAMPOS_HEX.test(corFundo)) {
+                    preview.style.backgroundColor = corFundo;
+                    bgPicker.value = "#" + paraHex6(corFundo);
+                    previewWrapper.className = "preview-panel " + (textoClaro(corFundo) ? "text-light" : "text-dark");
+                }
+
+                if (CAMPOS_HEX.test(corDestaque)) {
+                    var corDestaque6 = "#" + paraHex6(corDestaque);
+                    preview.style.setProperty("--dc-accent", corDestaque6);
+                    preview.style.setProperty("--dc-accent-soft", corDestaque6 + "29");
+                    preview.style.setProperty("--dc-accent-text", textoClaro(corDestaque) ? "#ffffff" : "#111827");
+                    accentPicker.value = corDestaque6;
                 }
             }
 
             form.addEventListener("input", atualizarPreview);
 
-            colorPicker.addEventListener("input", function () {
-                colorText.value = colorPicker.value;
+            bgPicker.addEventListener("input", function () {
+                bgText.value = bgPicker.value;
+                atualizarPreview();
+            });
+
+            accentPicker.addEventListener("input", function () {
+                accentText.value = accentPicker.value;
                 atualizarPreview();
             });
 

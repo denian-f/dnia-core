@@ -6,6 +6,7 @@
     --dc-overlay-light: rgba(0, 0, 0, 0.04);
     --dc-accent: #3b82f6;
     --dc-accent-soft: rgba(59, 130, 246, 0.16);
+    --dc-accent-text: #ffffff;
     --dc-text-light-secondary: #9ca3af;
     --dc-text-dark-secondary: #4b5563;
 }
@@ -141,24 +142,22 @@ body.text-dark {
     text-decoration: none;
     font-size: 14px;
     font-weight: 600;
+    border: 1px solid var(--dc-accent);
+    color: var(--dc-accent);
 }
 
 .text-light .bc-btn {
     background-color: var(--dc-overlay-dark);
-    border: 1px solid var(--dc-card-border-dark);
-    color: inherit;
 }
 
 .text-dark .bc-btn {
     background-color: var(--dc-overlay-light);
-    border: 1px solid var(--dc-card-border-light);
-    color: inherit;
 }
 
 .bc-btn-primary {
     background-color: var(--dc-accent) !important;
     border: none !important;
-    color: #ffffff !important;
+    color: var(--dc-accent-text) !important;
 }
 
 .bc-social {

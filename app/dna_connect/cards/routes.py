@@ -51,6 +51,7 @@ def _validar_target_url(target_url: str) -> bool:
 _HEX_COLOR = re.compile(r"#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$")
 
 _COR_FUNDO_PADRAO = "#05070d"
+_COR_DESTAQUE_PADRAO = "#3b82f6"
 
 
 def _cor_fundo_valida(valor):
@@ -66,22 +67,53 @@ def _cor_fundo_valida(valor):
     return _COR_FUNDO_PADRAO
 
 
-def _texto_claro_sobre_fundo(hex_color: str) -> bool:
+def _cor_destaque_valida(valor):
     """
-    Heurística simples de luminância (não é um algoritmo completo de
-    contraste WCAG) apenas para evitar texto escuro sobre fundo escuro
-    ou texto claro sobre fundo muito claro.
+    Mesma validação de _cor_fundo_valida, para accent_color (Sprint 31)
+    — cartões sem cor de destaque configurada usam o azul padrão atual.
     """
+
+    if valor and _HEX_COLOR.fullmatch(valor.strip()):
+        return valor.strip()
+
+    return _COR_DESTAQUE_PADRAO
+
+
+def _hex_para_rgb(hex_color: str):
 
     valor = hex_color.lstrip("#")
 
     if len(valor) == 3:
         valor = "".join(c * 2 for c in valor)
 
-    r, g, b = (int(valor[i:i + 2], 16) for i in (0, 2, 4))
+    return tuple(int(valor[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def _texto_claro_sobre_fundo(hex_color: str) -> bool:
+    """
+    Heurística simples de luminância (não é um algoritmo completo de
+    contraste WCAG) apenas para evitar texto escuro sobre fundo escuro
+    ou texto claro sobre fundo muito claro. Reutilizada tanto para o
+    fundo do cartão quanto para a cor de destaque (Sprint 31), já que
+    o problema (legibilidade do texto sobre uma cor) é o mesmo.
+    """
+
+    r, g, b = _hex_para_rgb(hex_color)
     luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255
 
     return luminancia < 0.6
+
+
+def _cor_com_opacidade(hex_color: str, alpha: float) -> str:
+    """
+    Versão translúcida (rgba) de uma cor hex — usada para os fundos
+    suaves dos elementos de destaque (avatar placeholder, badge da
+    empresa) quando a cor de destaque é personalizada.
+    """
+
+    r, g, b = _hex_para_rgb(hex_color)
+
+    return f"rgba({r}, {g}, {b}, {alpha})"
 
 
 def _url_segura(valor):
@@ -241,6 +273,12 @@ def _validar_dados_perfil(form):
     if dados["background_color"] and not _HEX_COLOR.fullmatch(dados["background_color"]):
         erros.append("Cor de fundo deve ser um hexadecimal válido (ex: #05070d).")
 
+    if dados["accent_color"] and not _HEX_COLOR.fullmatch(dados["accent_color"]):
+        erros.append("Cor de destaque deve ser um hexadecimal válido (ex: #3b82f6).")
+
+    if dados["google_maps_url"] and not dados["google_maps_url"].startswith(("http://", "https://")):
+        erros.append("O link do Google Maps deve ser uma URL válida, iniciando com http:// ou https://.")
+
     for campo in _CAMPOS_URL_OU_HANDLE:
 
         if not _valor_sem_esquema_perigoso(dados[campo]):
@@ -345,6 +383,7 @@ def card_business_profile(card_code: str, request: Request):
         )
 
     cor_fundo = _cor_fundo_valida(perfil.background_color)
+    cor_destaque = _cor_destaque_valida(perfil.accent_color)
 
     return templates.TemplateResponse(
         request=request,
@@ -364,10 +403,14 @@ def card_business_profile(card_code: str, request: Request):
             "tiktok_link": _url_rede_social("https://tiktok.com/@", perfil.tiktok),
             "youtube_link": _url_rede_social("https://youtube.com/", perfil.youtube),
             "website_link": _link_website(perfil.website),
+            "google_maps_link": _url_segura(perfil.google_maps_url),
             "pix_key": perfil.pix_key,
             "pix_key_type": perfil.pix_key_type,
             "cor_fundo": cor_fundo,
-            "texto_claro": _texto_claro_sobre_fundo(cor_fundo)
+            "texto_claro": _texto_claro_sobre_fundo(cor_fundo),
+            "cor_destaque": cor_destaque,
+            "cor_destaque_soft": _cor_com_opacidade(cor_destaque, 0.16),
+            "cor_destaque_texto": "#ffffff" if _texto_claro_sobre_fundo(cor_destaque) else "#111827"
         }
     )
 
@@ -681,7 +724,6 @@ def _renderizar_pagina_edicao(
             "cartao": cartao,
             "perfil": perfil,
             "foto_atual": foto_atual,
-            "url_cartao_visita": f"/c/{cartao.code}/cartao-visita",
             "url_cartao_fisico": construir_url_publica_cartao(cartao.code),
             "url_qr_cartao": f"/cards/{cartao.code}/qr",
             "erro": erro,
