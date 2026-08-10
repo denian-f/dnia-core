@@ -1,29 +1,174 @@
+/* ───────────────────────────────────────────────────────────────────────
+   Navegação das áreas autenticadas: sidebar fixa no desktop (>=1024px),
+   barra superior + drawer no mobile. Compartilhado por _nav.html
+   (cliente) e _admin_nav.html (admin) — ambos usam as mesmas classes.
+   ─────────────────────────────────────────────────────────────────── */
+
 .app-nav {
+    display: none;
+}
+
+.app-nav-logo {
     display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 12px 24px;
-    background-color: #1f2937;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app-nav-badge {
+    align-self: flex-start;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background-color: var(--dc-brand);
+    color: #ffffff;
+}
+
+.app-nav-links {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.app-nav-footer {
+    padding: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .nav-link {
-    color: #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.6);
     text-decoration: none;
     font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.15s, color 0.15s;
 }
 
 .nav-link:hover {
     color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link-active {
+    color: #ffffff;
+    background-color: var(--dc-brand);
+}
+
+.nav-link-active:hover {
+    background-color: var(--dc-brand);
+}
+
+.nav-link-muted {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.nav-link svg {
+    flex-shrink: 0;
 }
 
 .nav-logout-form {
-    margin: 0 0 0 auto;
+    margin: 0;
 }
 
 .nav-logout {
+    width: 100%;
+    text-align: left;
     background: none;
     border: none;
     padding: 0;
     cursor: pointer;
     font-family: inherit;
+}
+
+/* Barra superior mobile */
+
+.app-nav-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background-color: var(--dc-navy);
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+
+.app-nav-mobile-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.app-nav-toggle {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.75);
+    padding: 4px;
+    cursor: pointer;
+    line-height: 0;
+}
+
+.app-nav-toggle:hover {
+    color: #ffffff;
+}
+
+.app-nav-drawer {
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 12px 12px 12px;
+    background-color: var(--dc-navy);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app-nav-drawer.is-open {
+    display: flex;
+}
+
+/* Deslocamento do conteúdo principal para abrir espaço pra sidebar fixa */
+
+.app-shell-main {
+    min-height: 100vh;
+}
+
+@media (min-width: 1024px) {
+
+    .app-nav {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: var(--dc-sidebar-width);
+        height: 100vh;
+        background-color: var(--dc-navy);
+        z-index: 40;
+    }
+
+    .app-nav-mobile,
+    .app-nav-drawer {
+        display: none !important;
+    }
+
+    .app-shell-main {
+        margin-left: var(--dc-sidebar-width);
+    }
+
+    body.has-sidebar {
+        padding-left: var(--dc-sidebar-width);
+    }
+
 }

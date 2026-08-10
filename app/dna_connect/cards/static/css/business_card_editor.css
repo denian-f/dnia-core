@@ -1,24 +1,38 @@
 /*
- * business_card.css também é carregado nesta página (para reaproveitar
- * as classes .bc-* na prévia) e define regras de `body` pensadas para
- * a página pública (fundo escuro, display:flex centralizado). Este
- * reset garante que a página do editor mantenha o fundo claro e o
- * layout padrão das páginas autenticadas do DNA Connect.
+ * business_card.css is also loaded on this page (to reuse the .bc-*
+ * classes in the live preview). Its `body` rules target the public
+ * card page (dark background, full-height flex centering). This
+ * override keeps the editor page using the standard authenticated
+ * app layout (sidebar + light surface background).
  */
 body {
-    background-color: #f4f4f5;
-    color: #1a1a1a;
+    background-color: var(--dc-surface);
+    color: var(--dc-navy);
     display: block;
     justify-content: normal;
     padding: 0;
     min-height: auto;
 }
 
-.editor-page {
-    width: 100%;
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 24px;
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--dc-gray-500);
+}
+
+.breadcrumb a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--dc-gray-500);
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    color: var(--dc-navy);
 }
 
 .mode-selector {
@@ -36,43 +50,53 @@ body {
     width: 100%;
     text-align: left;
     padding: 16px;
-    border-radius: 8px;
-    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    border: 2px solid var(--dc-gray-200);
     background-color: #ffffff;
     cursor: pointer;
     display: flex;
     flex-direction: column;
     gap: 4px;
+    transition: border-color 0.15s;
+}
+
+.mode-option:hover {
+    border-color: var(--dc-gray-300, #d1d9f0);
 }
 
 .mode-option-title {
     font-weight: 700;
-    color: #111827;
+    color: var(--dc-navy);
     font-size: 14px;
 }
 
 .mode-option-desc {
     font-size: 12px;
-    color: #6b7280;
+    color: var(--dc-gray-500);
 }
 
 .mode-option-active {
-    border-color: #3b82f6;
-    background-color: #eff6ff;
+    border-color: var(--dc-brand);
+    background-color: var(--dc-brand-light);
+}
+
+.mode-option-active .mode-option-title {
+    color: var(--dc-brand);
 }
 
 .physical-card-section {
     background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 16px;
     padding: 20px;
     margin: 0 0 24px 0;
 }
 
 .physical-card-title {
     margin: 0 0 16px 0;
-    font-size: 15px;
-    color: #111827;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dc-navy);
 }
 
 .physical-card-content {
@@ -87,7 +111,7 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #6b7280;
+    color: var(--dc-gray-500);
     margin-bottom: 6px;
 }
 
@@ -98,17 +122,19 @@ body {
 .physical-card-url {
     display: block;
     word-break: break-all;
-    background-color: #f3f4f6;
-    padding: 8px 10px;
-    border-radius: 4px;
+    background-color: var(--dc-gray-50);
+    border: 1px solid var(--dc-gray-200);
+    padding: 8px 12px;
+    border-radius: 10px;
     font-size: 13px;
     margin-bottom: 10px;
+    color: var(--dc-gray-700);
 }
 
 .physical-card-hint {
     margin: 10px 0 0 0;
     font-size: 12px;
-    color: #6b7280;
+    color: var(--dc-gray-500);
     line-height: 1.5;
 }
 
@@ -122,8 +148,8 @@ body {
 .physical-card-qr-img {
     width: 140px;
     height: 140px;
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 10px;
 }
 
 @media (min-width: 640px) {
@@ -136,14 +162,20 @@ body {
 }
 
 .btn-view-card {
+    display: inline-block;
     padding: 8px 14px;
-    background-color: #111827;
+    background-color: var(--dc-brand);
     color: #ffffff;
     text-decoration: none;
-    border-radius: 4px;
+    border-radius: 10px;
     font-size: 13px;
     font-weight: 600;
     white-space: nowrap;
+    transition: background-color 0.15s;
+}
+
+.btn-view-card:hover {
+    background-color: var(--dc-brand-dark);
 }
 
 .editor-layout {
@@ -155,8 +187,8 @@ body {
 
 .business-profile-form {
     background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 16px;
     padding: 24px;
     display: flex;
     flex-direction: column;
@@ -165,8 +197,8 @@ body {
 
 .business-profile-form fieldset {
     border: none;
-    border-top: 1px solid #e5e7eb;
-    padding: 16px 0;
+    border-top: 1px solid var(--dc-gray-200);
+    padding: 20px 0;
     margin: 0;
 }
 
@@ -177,27 +209,42 @@ body {
 
 .business-profile-form legend {
     font-size: 13px;
-    font-weight: 700;
-    color: #111827;
-    padding: 0;
-    margin: 0 0 8px 0;
+    font-weight: 600;
+    color: var(--dc-navy);
+    padding: 0 0 12px 0;
+    margin: 0 0 4px 0;
+    width: 100%;
+    border-bottom: 1px solid var(--dc-gray-200);
 }
 
 .business-profile-form label {
-    font-size: 13px;
-    color: #4b5563;
-    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--dc-gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin-top: 12px;
     display: block;
 }
 
 .business-profile-form input,
 .business-profile-form textarea {
     width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
+    padding: 10px 12px;
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 10px;
     font-size: 14px;
     font-family: inherit;
+    color: var(--dc-navy);
+    background-color: #ffffff;
+    margin-top: 6px;
+}
+
+.business-profile-form input:focus,
+.business-profile-form textarea:focus {
+    outline: none;
+    border-color: var(--dc-brand);
+    box-shadow: 0 0 0 3px var(--dc-brand-light);
 }
 
 .business-profile-form textarea {
@@ -208,33 +255,33 @@ body {
     display: flex;
     align-items: center;
     gap: 14px;
-    margin-top: 6px;
+    margin-top: 8px;
 }
 
 .photo-preview {
     flex-shrink: 0;
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
 }
 
 .photo-preview-img {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     object-fit: cover;
     display: block;
 }
 
 .photo-preview-placeholder {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #eff6ff;
-    color: #3b82f6;
-    font-size: 24px;
+    background-color: var(--dc-brand-light);
+    color: var(--dc-brand);
+    font-size: 20px;
     font-weight: 600;
 }
 
@@ -249,17 +296,18 @@ body {
     border: none;
     padding: 0;
     font-size: 13px;
+    color: var(--dc-gray-700);
 }
 
 .photo-field-hint,
 .field-hint {
     font-size: 12px;
-    color: #6b7280;
+    color: var(--dc-gray-500);
 }
 
 .field-hint {
     display: block;
-    margin-top: 4px;
+    margin-top: 6px;
 }
 
 .remove-photo-form {
@@ -268,29 +316,41 @@ body {
 
 .btn-remove-photo {
     padding: 6px 12px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--dc-error-border);
     background-color: #ffffff;
-    color: #991b1b;
-    border-radius: 4px;
+    color: var(--dc-error-text);
+    border-radius: 8px;
     font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.btn-remove-photo:hover {
+    background-color: var(--dc-error-bg);
 }
 
 .color-field {
     display: flex;
     align-items: center;
     gap: 10px;
+    margin-top: 6px;
 }
 
 .color-field input[type="color"] {
-    width: 44px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     padding: 2px;
     flex-shrink: 0;
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 0;
 }
 
 .color-field input[type="text"] {
     flex: 1;
+    margin-top: 0;
 }
 
 .preview-panel {
@@ -306,7 +366,7 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #6b7280;
+    color: var(--dc-gray-500);
 }
 
 .preview-panel.text-light {
@@ -320,6 +380,9 @@ body {
 .preview-panel .bc-card {
     width: 100%;
     max-width: none;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid var(--dc-gray-200);
 }
 
 @media (min-width: 900px) {

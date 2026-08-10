@@ -4,12 +4,15 @@
 
 {% block content %}
 
-    <section class="dashboard-welcome">
-        <h2>Olá, {{ user.name }}</h2>
-        <p class="dashboard-email">{{ user.email }}</p>
-        <a href="/cards/activate" class="btn-activate-card">Ativar cartão</a>
-        <a href="/profile" class="btn-activate-card">Meu Perfil</a>
-        <a href="/change-password" class="btn-activate-card">Alterar Senha</a>
+    <section class="dashboard-header">
+        <div class="dashboard-welcome">
+            <h2>Olá, {{ user.name }}</h2>
+            <p class="dashboard-email">{{ user.email }}</p>
+        </div>
+        <a href="/cards/activate" class="btn-activate-card">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            Ativar cartão
+        </a>
     </section>
 
     <section class="dashboard-summary">
@@ -28,39 +31,48 @@
     </section>
 
     <section class="dashboard-cards">
-        <table class="cards-table">
-            <thead>
-                <tr>
-                    <th>Código</th>
-                    <th>Status</th>
-                    <th>Destino</th>
-                    <th>Criado em</th>
-                    <th>Atualizado em</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for cartao in cartoes %}
-                <tr>
-                    <td>{{ cartao.code }}</td>
-                    <td>{{ "Ativado" if cartao.activated else "Inativo" }}</td>
-                    <td>{{ cartao.target_url }}</td>
-                    <td>{{ cartao.created_at }}</td>
-                    <td>{{ cartao.updated_at }}</td>
-                    <td>
-                        <a class="btn-edit" href="/cards/{{ cartao.code }}/edit">Editar</a>
-                        <form class="remove-card-form" method="post" action="/cards/{{ cartao.code }}/remove">
-                            <button type="submit" class="btn-remove" onclick="return confirm('Deseja realmente remover este cartão?')">Remover</button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="6" class="cards-empty">Nenhum cartão encontrado.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <h3 class="dashboard-cards-title">Meus cartões</h3>
+        <div class="table-scroll">
+            <table class="cards-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Status</th>
+                        <th>Destino</th>
+                        <th>Criado em</th>
+                        <th>Atualizado em</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cartao in cartoes %}
+                    <tr>
+                        <td>{{ cartao.code }}</td>
+                        <td>
+                            {% if cartao.activated %}
+                            <span class="status-pill status-pill-active">Ativado</span>
+                            {% else %}
+                            <span class="status-pill status-pill-inactive">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ cartao.target_url }}</td>
+                        <td>{{ cartao.created_at }}</td>
+                        <td>{{ cartao.updated_at }}</td>
+                        <td>
+                            <a class="btn-edit" href="/cards/{{ cartao.code }}/edit">Editar</a>
+                            <form class="remove-card-form" method="post" action="/cards/{{ cartao.code }}/remove">
+                                <button type="submit" class="btn-remove" onclick="return confirm('Deseja realmente remover este cartão?')">Remover</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="cards-empty">Nenhum cartão encontrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </section>
 
 {% endblock %}

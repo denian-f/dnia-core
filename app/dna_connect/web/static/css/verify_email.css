@@ -1,8 +1,26 @@
+.verify-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px auto;
+}
+
+.verify-icon-info {
+    background-color: var(--dc-brand-light);
+}
+
+.verify-icon-success {
+    background-color: var(--dc-success-bg);
+}
+
+.verify-icon-error {
+    background-color: var(--dc-error-bg);
+}
+
 .verify-box {
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    padding: 24px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -11,46 +29,74 @@
 
 .verify-text {
     font-size: 14px;
-    color: #4b5563;
-    line-height: 1.5;
+    color: var(--dc-gray-500);
+    line-height: 1.6;
     margin: 0;
 }
 
 .verify-text-error {
-    color: #991b1b;
+    color: var(--dc-gray-500);
 }
 
 .verify-message {
     margin: 0;
-    padding: 8px 10px;
-    background-color: #dcfce7;
-    color: #166534;
-    border-radius: 4px;
+    padding: 10px 14px;
+    background-color: var(--dc-success-bg);
+    color: var(--dc-success-text);
+    border: 1px solid var(--dc-success-border);
+    border-radius: 8px;
     font-size: 13px;
+}
+
+.verify-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    text-align: left;
+    padding: 14px;
+    background-color: var(--dc-error-bg);
+    color: var(--dc-error-text);
+    border: 1px solid var(--dc-error-border);
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
 }
 
 .verify-resend-form {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 12px;
     margin-top: 8px;
-}
-
-.verify-resend-form label {
-    font-size: 13px;
-    color: #4b5563;
     text-align: left;
 }
 
+.verify-resend-form label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--dc-gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
 .verify-resend-form input {
-    padding: 8px 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
+    width: 100%;
+    padding: 10px 14px;
     font-size: 14px;
+    color: var(--dc-gray-900);
+    background-color: var(--dc-gray-50);
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 8px;
+    outline: none;
+}
+
+.verify-resend-form input:focus {
+    border-color: var(--dc-brand);
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(8, 94, 254, 0.1);
 }
 
 .verify-button-link {
-    display: inline-block;
+    display: block;
     text-align: center;
     text-decoration: none;
 }

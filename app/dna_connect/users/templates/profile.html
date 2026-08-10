@@ -4,41 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meu Perfil - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/tokens.css">
     <link rel="stylesheet" href="/dashboard/static/css/nav.css">
     <link rel="stylesheet" href="/profile/static/css/profile.css">
 </head>
-<body>
+<body class="has-sidebar">
 
     {% include "_nav.html" %}
 
-    <main class="profile-container">
+    <div class="app-shell-main">
+        <main class="app-content">
 
-        <h1 class="profile-title">Meu Perfil</h1>
+            <h1 class="form-page-title">Meu Perfil</h1>
+            <p class="form-page-subtitle">Gerencie suas informações pessoais</p>
 
-        <form class="profile-form" method="post" action="/profile">
+            <form class="profile-form" method="post" action="/profile">
 
-            <label for="name">Nome</label>
-            <input type="text" id="name" name="name" value="{{ usuario.name }}" required>
+                <label for="name">Nome</label>
+                <input type="text" id="name" name="name" value="{{ usuario.name }}" required>
 
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" value="{{ usuario.email }}" required>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="{{ usuario.email }}" required>
 
-            <div class="profile-actions">
-                <button type="submit" class="btn-save">Salvar</button>
-                <a href="/dashboard/view" class="btn-cancel">Cancelar</a>
+                <div class="profile-actions">
+                    <button type="submit" class="btn-save">Salvar</button>
+                    <a href="/dashboard/view" class="btn-cancel">Cancelar</a>
+                </div>
+
+                {% if erro %}
+                <p class="profile-message profile-error">{{ erro }}</p>
+                {% endif %}
+
+                {% if sucesso %}
+                <p class="profile-message profile-success">{{ sucesso }}</p>
+                {% endif %}
+
+            </form>
+
+            <div class="security-card">
+                <div>
+                    <p class="security-card-label">Senha</p>
+                    <p class="security-card-hint">Altere sua senha de acesso</p>
+                </div>
+                <a href="/change-password" class="btn-security">Alterar senha</a>
             </div>
 
-            {% if erro %}
-            <p class="profile-message profile-error">{{ erro }}</p>
-            {% endif %}
-
-            {% if sucesso %}
-            <p class="profile-message profile-success">{{ sucesso }}</p>
-            {% endif %}
-
-        </form>
-
-    </main>
+        </main>
+    </div>
 
 </body>
 </html>

@@ -4,34 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ativar Cartão - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/tokens.css">
     <link rel="stylesheet" href="/dashboard/static/css/nav.css">
     <link rel="stylesheet" href="/cards/static/css/activate_card.css">
 </head>
-<body>
+<body class="has-sidebar">
 
     {% include "_nav.html" %}
 
-    <main class="activate-container">
+    <div class="app-shell-main">
+        <main class="app-content">
 
-        <h1 class="activate-title">Ativar Cartão</h1>
-
-        <form class="activate-form" method="post" action="/cards/activate">
-
-            <label for="card_code">Código do cartão</label>
-            <input type="text" id="card_code" name="card_code" required>
-
-            <div class="activate-actions">
-                <button type="submit" class="btn-activate">Ativar</button>
-                <a href="/dashboard/view" class="btn-cancel">Cancelar</a>
+            <div class="activate-icon">
+                <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
             </div>
 
-            {% if erro %}
-            <p class="activate-message activate-error">{{ erro }}</p>
-            {% endif %}
+            <h1 class="form-page-title activate-title">Código do cartão</h1>
+            <p class="form-page-subtitle activate-subtitle">Digite o código impresso no seu cartão DNA Connect para ativá-lo na sua conta.</p>
 
-        </form>
+            <form class="activate-form" method="post" action="/cards/activate">
 
-    </main>
+                <label for="card_code">Código do cartão</label>
+                <input type="text" id="card_code" name="card_code" required>
+
+                <div class="activate-actions">
+                    <button type="submit" class="btn-activate">Ativar</button>
+                    <a href="/dashboard/view" class="btn-cancel">Cancelar</a>
+                </div>
+
+                {% if erro %}
+                <p class="activate-message activate-error">{{ erro }}</p>
+                {% endif %}
+
+            </form>
+
+        </main>
+    </div>
 
 </body>
 </html>

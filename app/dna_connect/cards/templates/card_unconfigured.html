@@ -4,30 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cartão não configurado - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/tokens.css">
     <link rel="stylesheet" href="/cards/static/css/card_public.css">
 </head>
-<body>
+<body class="public-page public-light">
 
-    <main class="public-container">
+    <div class="public-wrap">
 
-        <h1 class="public-title">DNA Connect</h1>
-
-        <p class="public-message">
-            Seu cartão inteligente ainda não está configurado.
-        </p>
-
-        <p class="public-explanation">
-            Para utilizar este cartão, crie sua conta ou faça login no DNA Connect.
-            Depois de acessar sua conta, você poderá ativar o seu cartão e editar
-            o direcionamento do seu cartão inteligente.
-        </p>
-
-        <div class="public-actions">
-            <a href="/register/view" class="btn-public-primary">Criar conta</a>
-            <a href="/login/view" class="btn-public-secondary">Entrar</a>
+        <div class="public-logo dc-logo">
+            <img src="/dashboard/static/img/dna-logo-icon.svg" alt="">
+            <span class="dc-logo-text">DNA Connect</span>
         </div>
 
-    </main>
+        <main class="public-container">
+
+            <div class="public-icon">
+                <svg width="26" height="26" fill="none" stroke="#085efe" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            </div>
+
+            <h1 class="public-title">Cartão não configurado</h1>
+
+            <p class="public-message">
+                Seu cartão inteligente ainda não está configurado.
+            </p>
+
+            <p class="public-explanation">
+                Para utilizar este cartão, crie sua conta ou faça login no DNA Connect.
+                Depois de acessar sua conta, você poderá ativar o seu cartão e editar
+                o direcionamento do seu cartão inteligente.
+            </p>
+
+            <div class="public-actions">
+                <a href="/register/view" class="btn-public-primary">Criar conta</a>
+                <a href="/login/view" class="btn-public-secondary">Entrar</a>
+            </div>
+
+        </main>
+
+        <p class="public-footer">&copy; 2026 DNA Connect</p>
+
+    </div>
 
 </body>
 </html>

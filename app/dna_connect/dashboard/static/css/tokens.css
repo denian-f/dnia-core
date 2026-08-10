@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --dc-brand: #085efe;
+    --dc-brand-dark: #0550d6;
+    --dc-brand-darker: #0445c0;
+    --dc-brand-light: #e8f0ff;
+    --dc-navy: #0b1f4a;
+    --dc-navy-mid: #1e3a6e;
+    --dc-surface: #f5f7fa;
+    --dc-white: #ffffff;
+    --dc-gray-50: #f9fafb;
+    --dc-gray-100: #f3f4f6;
+    --dc-gray-200: #e5e8ef;
+    --dc-gray-400: #9ca3af;
+    --dc-gray-500: #6b7280;
+    --dc-gray-700: #374151;
+    --dc-gray-900: #111827;
+
+    --dc-success-bg: #ecfdf5;
+    --dc-success-text: #065f46;
+    --dc-success-border: #a7f3d0;
+    --dc-error-bg: #fef2f2;
+    --dc-error-text: #991b1b;
+    --dc-error-border: #fecaca;
+    --dc-info-bg: #eff6ff;
+    --dc-info-text: #1d4ed8;
+    --dc-info-border: #bfdbfe;
+
+    --dc-sidebar-width: 224px;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+}
+
+body {
+    font-family: 'Inter', ui-sans-serif, system-ui, Arial, sans-serif;
+    background-color: var(--dc-surface);
+    color: var(--dc-gray-900);
+    -webkit-font-smoothing: antialiased;
+}
+
+a {
+    font-family: inherit;
+}
+
+.dc-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dc-logo svg,
+.dc-logo img {
+    display: block;
+    flex-shrink: 0;
+}
+
+.dc-logo-text {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--dc-navy);
+}
+
+.dc-logo-text-light {
+    color: #ffffff;
+}
+

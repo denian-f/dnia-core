@@ -1,19 +1,74 @@
-.admin-title {
-    color: #111827;
-    margin: 0 0 24px 0;
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--dc-gray-500);
+}
+
+.breadcrumb a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--dc-gray-500);
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    color: var(--dc-navy);
 }
 
 .admin-form-container {
-    max-width: 420px;
-    margin: 40px auto 0 auto;
-    padding: 0 24px;
+    max-width: 480px;
+}
+
+.admin-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--dc-navy);
+    letter-spacing: -0.01em;
+}
+
+.admin-subtitle {
+    margin: 6px 0 24px 0;
+    font-size: 14px;
+    color: var(--dc-gray-500);
+    line-height: 1.5;
+}
+
+.admin-card {
+    background-color: #ffffff;
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.admin-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background-color: var(--dc-info-bg);
+    border: 1px solid var(--dc-info-border);
+    margin-bottom: 20px;
+}
+
+.admin-hint svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.admin-hint p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--dc-info-text);
+    line-height: 1.5;
 }
 
 .admin-form {
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    padding: 24px;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -21,15 +76,25 @@
 
 .admin-form label {
     font-size: 13px;
-    color: #4b5563;
-    margin-top: 10px;
+    font-weight: 600;
+    color: var(--dc-gray-700);
+    margin-top: 12px;
 }
 
 .admin-form input {
-    padding: 8px 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
+    padding: 10px 12px;
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 10px;
     font-size: 14px;
+    font-family: inherit;
+    color: var(--dc-navy);
+    background-color: #ffffff;
+}
+
+.admin-form input:focus {
+    outline: none;
+    border-color: var(--dc-brand);
+    box-shadow: 0 0 0 3px var(--dc-brand-light);
 }
 
 .admin-actions {
@@ -40,35 +105,47 @@
 
 .btn-save {
     flex: 1;
-    padding: 10px;
-    background-color: #111827;
+    padding: 11px;
+    background-color: var(--dc-brand);
     color: #ffffff;
     border: none;
-    border-radius: 4px;
+    border-radius: 10px;
     font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.btn-save:hover {
+    background-color: var(--dc-brand-dark);
 }
 
 .btn-cancel {
     flex: 1;
-    padding: 10px;
-    background-color: #e5e7eb;
-    color: #1a1a1a;
-    border-radius: 4px;
+    padding: 11px;
+    background-color: var(--dc-gray-100);
+    color: var(--dc-navy);
+    border-radius: 10px;
     font-size: 14px;
+    font-weight: 600;
     text-align: center;
     text-decoration: none;
+    transition: background-color 0.15s;
+}
+
+.btn-cancel:hover {
+    background-color: var(--dc-gray-200);
 }
 
 .admin-message {
-    margin: 12px 0 0 0;
-    padding: 8px 10px;
-    border-radius: 4px;
+    margin: 16px 0 0 0;
+    padding: 10px 12px;
+    border-radius: 10px;
     font-size: 13px;
     text-align: center;
 }
 
 .admin-error {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: var(--dc-error-bg);
+    color: var(--dc-error-text);
 }

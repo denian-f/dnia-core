@@ -4,17 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administração - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/tokens.css">
     <link rel="stylesheet" href="/dashboard/static/css/nav.css">
     <link rel="stylesheet" href="/dashboard/static/css/dashboard.css">
     <link rel="stylesheet" href="/admin/static/css/admin.css">
 </head>
-<body>
+<body class="has-sidebar">
 
     {% include "_admin_nav.html" %}
 
-    <main class="app-content">
+    <div class="app-shell-main">
+        <main class="app-content">
 
-        <h1 class="admin-title">DNA Connect — Administração</h1>
+        <section class="dashboard-header">
+            <div class="dashboard-welcome">
+                <h2>Administração</h2>
+                <p class="dashboard-email">Gerencie todos os cartões do sistema.</p>
+            </div>
+            <a href="/admin/cards/new" class="btn-activate-card">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Novo cartão
+            </a>
+        </section>
 
         <section class="dashboard-summary">
             <div class="summary-card">
@@ -32,39 +43,49 @@
         </section>
 
         <section class="dashboard-cards">
-            <table class="cards-table">
-                <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Status</th>
-                        <th>Proprietário</th>
-                        <th>Destino</th>
-                        <th>Criado em</th>
-                        <th>Atualizado em</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for cartao in cartoes %}
-                    <tr>
-                        <td>{{ cartao.code }}</td>
-                        <td>{{ "Ativado" if cartao.activated else "Disponível" }}</td>
-                        <td>{{ cartao.owner_name if cartao.owner_name else "Disponível" }}</td>
-                        <td>{{ cartao.target_url if cartao.target_url else "-" }}</td>
-                        <td>{{ cartao.created_at }}</td>
-                        <td>{{ cartao.updated_at }}</td>
-                        <td><a class="btn-edit" href="/admin/cards/{{ cartao.code }}/qr">QR Code</a></td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="7" class="cards-empty">Nenhum cartão cadastrado.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <h3 class="dashboard-cards-title">Todos os cartões</h3>
+            <div class="table-scroll">
+                <table class="cards-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Status</th>
+                            <th>Proprietário</th>
+                            <th>Destino</th>
+                            <th>Criado em</th>
+                            <th>Atualizado em</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cartao in cartoes %}
+                        <tr>
+                            <td>{{ cartao.code }}</td>
+                            <td>
+                                {% if cartao.activated %}
+                                <span class="status-pill status-pill-active">Ativado</span>
+                                {% else %}
+                                <span class="status-pill status-pill-inactive">Disponível</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ cartao.owner_name if cartao.owner_name else "-" }}</td>
+                            <td>{{ cartao.target_url if cartao.target_url else "-" }}</td>
+                            <td>{{ cartao.created_at }}</td>
+                            <td>{{ cartao.updated_at }}</td>
+                            <td><a class="btn-edit" href="/admin/cards/{{ cartao.code }}/qr">QR Code</a></td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="cards-empty">Nenhum cartão cadastrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </section>
 
-    </main>
+        </main>
+    </div>
 
 </body>
 </html>

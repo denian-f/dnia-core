@@ -1,52 +1,73 @@
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    background-color: #f4f4f5;
-    color: #1a1a1a;
-}
-
-.activate-container {
-    width: 100%;
-    max-width: 420px;
+.app-content {
+    max-width: 480px;
     margin: 0 auto;
-    padding: 24px;
-    min-height: calc(100vh - 60px);
+    padding: 24px 16px;
+    text-align: center;
+}
+
+@media (min-width: 640px) {
+
+    .app-content {
+        padding: 32px 24px;
+    }
+
+}
+
+.activate-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px auto;
+    border-radius: 50%;
+    background-color: var(--dc-brand-light);
+    color: var(--dc-brand);
     display: flex;
-    flex-direction: column;
+    align-items: center;
     justify-content: center;
 }
 
-.activate-title {
+.form-page-title.activate-title {
     text-align: center;
-    margin: 0 0 24px 0;
-    color: #111827;
+}
+
+.form-page-subtitle.activate-subtitle {
+    text-align: center;
+    max-width: 380px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .activate-form {
     background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 16px;
     padding: 24px;
     display: flex;
     flex-direction: column;
     gap: 6px;
+    text-align: left;
 }
 
 .activate-form label {
     font-size: 13px;
-    color: #4b5563;
-    margin-top: 10px;
+    font-weight: 600;
+    color: var(--dc-gray-700);
 }
 
 .activate-form input {
-    padding: 8px 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
+    padding: 10px 12px;
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 10px;
     font-size: 14px;
+    font-family: inherit;
+    color: var(--dc-navy);
+    background-color: #ffffff;
+    text-transform: uppercase;
+}
+
+.activate-form input:focus {
+    outline: none;
+    border-color: var(--dc-brand);
+    box-shadow: 0 0 0 3px var(--dc-brand-light);
 }
 
 .activate-actions {
@@ -57,35 +78,47 @@ body {
 
 .btn-activate {
     flex: 1;
-    padding: 10px;
-    background-color: #111827;
+    padding: 11px;
+    background-color: var(--dc-brand);
     color: #ffffff;
     border: none;
-    border-radius: 4px;
+    border-radius: 10px;
     font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.btn-activate:hover {
+    background-color: var(--dc-brand-dark);
 }
 
 .btn-cancel {
     flex: 1;
-    padding: 10px;
-    background-color: #e5e7eb;
-    color: #1a1a1a;
-    border-radius: 4px;
+    padding: 11px;
+    background-color: var(--dc-gray-100);
+    color: var(--dc-navy);
+    border-radius: 10px;
     font-size: 14px;
+    font-weight: 600;
     text-align: center;
     text-decoration: none;
+    transition: background-color 0.15s;
+}
+
+.btn-cancel:hover {
+    background-color: var(--dc-gray-200);
 }
 
 .activate-message {
-    margin: 12px 0 0 0;
-    padding: 8px 10px;
-    border-radius: 4px;
+    margin: 16px 0 0 0;
+    padding: 10px 12px;
+    border-radius: 10px;
     font-size: 13px;
     text-align: center;
 }
 
 .activate-error {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: var(--dc-error-bg);
+    color: var(--dc-error-text);
 }

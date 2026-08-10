@@ -1,70 +1,177 @@
-* {
-    box-sizing: border-box;
+body {
+    min-height: 100vh;
 }
 
-body {
-    margin: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    background-color: #f4f4f5;
-    color: #1a1a1a;
-    height: 100vh;
+.auth-shell {
+    min-height: 100vh;
     display: flex;
+}
+
+.auth-hero {
+    display: none;
+    width: 46%;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 48px;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--dc-navy);
+    background-image: radial-gradient(circle at center, rgba(8, 94, 254, 0.18) 1px, transparent 1.2px);
+    background-size: 28px 28px;
+}
+
+.auth-hero-logo svg {
+    height: 32px;
+    width: auto;
+}
+
+.auth-hero-tagline {
+    color: #ffffff;
+}
+
+.auth-hero-tagline p:first-child {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0 0 12px 0;
+}
+
+.auth-hero-tagline p:first-child span {
+    color: var(--dc-brand);
+}
+
+.auth-hero-tagline p:last-child {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+}
+
+.auth-hero-footer {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+}
+
+.auth-form-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 48px 24px;
+    background-color: var(--dc-surface);
+}
+
+.auth-mobile-logo {
+    margin-bottom: 32px;
+}
+
+.auth-mobile-logo svg {
+    height: 28px;
+    width: auto;
 }
 
 .login-container {
     width: 100%;
-    max-width: 340px;
-    padding: 24px;
+    max-width: 380px;
+}
+
+.form-card {
+    background-color: #ffffff;
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
 
 .login-title {
-    text-align: center;
-    margin: 0 0 24px 0;
-    color: #111827;
+    text-align: left;
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--dc-navy);
+    letter-spacing: -0.01em;
+}
+
+.form-subtitle {
+    margin: 6px 0 0 0;
+    font-size: 14px;
+    color: var(--dc-gray-500);
+    line-height: 1.5;
 }
 
 .login-form {
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 16px;
+    margin-top: 24px;
 }
 
 .login-form label {
-    font-size: 13px;
-    color: #4b5563;
-    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--dc-gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    display: block;
+    margin-bottom: 6px;
 }
 
 .login-form input {
-    padding: 8px 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
+    width: 100%;
+    padding: 10px 14px;
     font-size: 14px;
+    color: var(--dc-gray-900);
+    background-color: var(--dc-gray-50);
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.login-form input:focus {
+    border-color: var(--dc-brand);
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(8, 94, 254, 0.1);
 }
 
 .login-button {
-    margin-top: 20px;
-    padding: 10px;
-    background-color: #111827;
+    margin-top: 4px;
+    padding: 11px;
+    background-color: var(--dc-brand);
     color: #ffffff;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.login-button:hover {
+    background-color: var(--dc-brand-dark);
 }
 
 .login-error {
-    margin: 12px 0 0 0;
-    padding: 8px 10px;
-    background-color: #fee2e2;
-    color: #991b1b;
-    border-radius: 4px;
+    margin: 0;
+    padding: 10px 14px;
+    background-color: var(--dc-error-bg);
+    color: var(--dc-error-text);
+    border: 1px solid var(--dc-error-border);
+    border-radius: 8px;
     font-size: 13px;
-    text-align: center;
+    text-align: left;
+}
+
+@media (min-width: 1024px) {
+
+    .auth-hero {
+        display: flex;
+    }
+
+    .auth-mobile-logo {
+        display: none;
+    }
+
 }

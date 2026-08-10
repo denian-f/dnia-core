@@ -4,20 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}DNA Connect{% endblock %}</title>
+    <link rel="stylesheet" href="/dashboard/static/css/tokens.css">
     <link rel="stylesheet" href="/dashboard/static/css/nav.css">
     <link rel="stylesheet" href="/dashboard/static/css/dashboard.css">
 </head>
-<body>
-
-    <header class="app-header">
-        <h1 class="app-title">DNA Connect</h1>
-    </header>
+<body class="has-sidebar">
 
     {% include "_nav.html" %}
 
-    <main class="app-content">
-        {% block content %}{% endblock %}
-    </main>
+    <div class="app-shell-main">
+        <main class="app-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 
 </body>
 </html>

@@ -4,16 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Cartão - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/tokens.css">
     <link rel="stylesheet" href="/dashboard/static/css/nav.css">
     <link rel="stylesheet" href="/cards/static/css/edit_card.css">
     <link rel="stylesheet" href="/cards/static/css/business_card.css">
     <link rel="stylesheet" href="/cards/static/css/business_card_editor.css">
 </head>
-<body>
+<body class="has-sidebar">
 
     {% include "_nav.html" %}
 
-    <main class="editor-page">
+    <div class="app-shell-main">
+        <main class="app-content">
+
+        <nav class="breadcrumb">
+            <a href="/dashboard/view">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                Dashboard
+            </a>
+            <span>/</span>
+            <span>{{ cartao.code }}</span>
+        </nav>
 
         <h1 class="edit-title">Editar Cartão — {{ cartao.code }}</h1>
 
@@ -271,7 +282,8 @@
 
         {% endif %}
 
-    </main>
+        </main>
+    </div>
 
     {% if cartao.mode == "business_card" %}
     <script>

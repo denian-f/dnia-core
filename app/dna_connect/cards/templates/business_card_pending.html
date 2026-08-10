@@ -4,24 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cartão de visita ainda não configurado - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/tokens.css">
     <link rel="stylesheet" href="/cards/static/css/card_public.css">
 </head>
-<body>
+<body class="public-page public-dark">
 
-    <main class="public-container">
+    <div class="public-wrap">
 
-        <h1 class="public-title">DNA Connect</h1>
+        <div class="public-logo dc-logo">
+            <img src="/dashboard/static/img/dna-logo-icon.svg" alt="">
+            <span class="dc-logo-text dc-logo-text-light">DNA Connect</span>
+        </div>
 
-        <p class="public-message">
-            Este cartão de visita digital ainda não foi configurado.
-        </p>
+        <main class="public-container">
 
-        <p class="public-explanation">
-            O proprietário deste cartão ainda não preencheu suas informações.
-            Volte em breve.
-        </p>
+            <div class="public-icon">
+                <svg width="26" height="26" fill="none" stroke="#085efe" stroke-width="1.5" stroke-linecap="round" viewBox="0 0 24 24">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/>
+                    <path d="M2 10h20"/>
+                    <path d="M8 15h.01M12 15h4"/>
+                    <path d="M7 15h.01"/>
+                </svg>
+            </div>
 
-    </main>
+            <h1 class="public-title">Cartão não configurado</h1>
+
+            <p class="public-message">
+                Este cartão de visita digital ainda não foi configurado.
+            </p>
+
+            <p class="public-explanation">
+                O proprietário deste cartão ainda não preencheu suas informações.
+                Volte em breve.
+            </p>
+
+        </main>
+
+    </div>
 
 </body>
 </html>

@@ -4,34 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Novo Cartão - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/tokens.css">
     <link rel="stylesheet" href="/dashboard/static/css/nav.css">
     <link rel="stylesheet" href="/admin/static/css/admin.css">
 </head>
-<body>
+<body class="has-sidebar">
 
     {% include "_admin_nav.html" %}
 
-    <main class="admin-form-container">
+    <div class="app-shell-main">
+        <main class="app-content admin-form-container">
+
+        <nav class="breadcrumb">
+            <a href="/admin">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                Dashboard Admin
+            </a>
+            <span>/</span>
+            <span>Novo cartão</span>
+        </nav>
 
         <h1 class="admin-title">Cadastrar novo cartão</h1>
+        <p class="admin-subtitle">Registre o código de um cartão físico DNA Connect para disponibilizá-lo no sistema.</p>
 
-        <form class="admin-form" method="post" action="/admin/cards/new">
+        <div class="admin-card">
 
-            <label for="card_code">Código do cartão</label>
-            <input type="text" id="card_code" name="card_code" placeholder="DNAC-A7K9P2" required>
-
-            <div class="admin-actions">
-                <button type="submit" class="btn-save">Cadastrar</button>
-                <a href="/admin" class="btn-cancel">Cancelar</a>
+            <div class="admin-hint">
+                <svg width="18" height="18" fill="none" stroke="var(--dc-brand)" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <p>O código está impresso no verso do cartão físico. Exemplo: <strong>DNAC-A7K9P2</strong></p>
             </div>
 
-            {% if erro %}
-            <p class="admin-message admin-error">{{ erro }}</p>
-            {% endif %}
+            <form class="admin-form" method="post" action="/admin/cards/new">
 
-        </form>
+                <label for="card_code">Código do cartão</label>
+                <input type="text" id="card_code" name="card_code" placeholder="DNAC-A7K9P2" required>
 
-    </main>
+                <div class="admin-actions">
+                    <button type="submit" class="btn-save">Cadastrar</button>
+                    <a href="/admin" class="btn-cancel">Cancelar</a>
+                </div>
+
+                {% if erro %}
+                <p class="admin-message admin-error">{{ erro }}</p>
+                {% endif %}
+
+            </form>
+
+        </div>
+
+        </main>
+    </div>
 
 </body>
 </html>

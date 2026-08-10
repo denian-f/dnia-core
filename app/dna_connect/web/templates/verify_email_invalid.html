@@ -4,32 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Link inválido - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/tokens.css">
     <link rel="stylesheet" href="/login/static/css/login.css">
+    <link rel="stylesheet" href="/login/static/css/register.css">
     <link rel="stylesheet" href="/login/static/css/verify_email.css">
 </head>
 <body>
 
-    <main class="login-container">
+    <div class="auth-shell">
 
-        <h1 class="login-title">Link inválido</h1>
+        <div class="auth-hero">
+            <span class="dc-logo"><img src="/dashboard/static/img/dna-logo-icon.svg" alt="" width="26" height="20"><span class="dc-logo-text dc-logo-text-light">DNA Connect</span></span>
+            <div class="auth-hero-tagline">
+                <p>Seu cartão digital.<br><span>Sempre com você.</span></p>
+                <p>Crie e gerencie cartões de visita digitais conectados via NFC e QR Code.</p>
+            </div>
+            <div class="auth-hero-footer">© 2026 DNA Connect</div>
+        </div>
 
-        <div class="verify-box">
+        <div class="auth-form-area">
 
-            <p class="verify-text verify-text-error">
-                Este link de verificação é inválido ou expirou.
-            </p>
+            <div class="auth-mobile-logo">
+                <span class="dc-logo"><img src="/dashboard/static/img/dna-logo-icon.svg" alt="" width="24" height="19"><span class="dc-logo-text">DNA Connect</span></span>
+            </div>
 
-            <form class="verify-resend-form" method="post" action="/verify-email/resend">
-                <label for="resend_email">Informe seu e-mail para receber um novo link:</label>
-                <input type="email" id="resend_email" name="email" required>
-                <button type="submit" class="login-button">Reenviar e-mail de verificação</button>
-            </form>
+            <main class="login-container">
 
-            <a href="/login/view" class="register-link">Voltar ao login</a>
+                <div class="form-card">
+
+                    <div class="verify-icon verify-icon-error">
+                        <svg width="26" height="26" fill="none" stroke="#991b1b" stroke-width="1.5" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </div>
+
+                    <div class="verify-box">
+                        <h1 class="login-title" style="text-align:center;">Link inválido</h1>
+                        <p class="verify-alert">Este link de verificação é inválido ou expirou. Informe seu e-mail para receber um novo link.</p>
+
+                        <form class="verify-resend-form" method="post" action="/verify-email/resend">
+                            <div>
+                                <label for="resend_email">Email</label>
+                                <input type="email" id="resend_email" name="email" required>
+                            </div>
+                            <button type="submit" class="login-button">Reenviar e-mail de verificação</button>
+                        </form>
+
+                        <a href="/login/view" class="register-link">Voltar ao login</a>
+                    </div>
+
+                </div>
+
+            </main>
 
         </div>
 
-    </main>
+    </div>
 
 </body>
 </html>

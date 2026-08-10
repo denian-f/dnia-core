@@ -4,38 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verifique seu e-mail - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/tokens.css">
     <link rel="stylesheet" href="/login/static/css/login.css">
+    <link rel="stylesheet" href="/login/static/css/register.css">
     <link rel="stylesheet" href="/login/static/css/verify_email.css">
 </head>
 <body>
 
-    <main class="login-container">
+    <div class="auth-shell">
 
-        <h1 class="login-title">Verifique seu e-mail</h1>
+        <div class="auth-hero">
+            <span class="dc-logo"><img src="/dashboard/static/img/dna-logo-icon.svg" alt="" width="26" height="20"><span class="dc-logo-text dc-logo-text-light">DNA Connect</span></span>
+            <div class="auth-hero-tagline">
+                <p>Seu cartão digital.<br><span>Sempre com você.</span></p>
+                <p>Crie e gerencie cartões de visita digitais conectados via NFC e QR Code.</p>
+            </div>
+            <div class="auth-hero-footer">© 2026 DNA Connect</div>
+        </div>
 
-        <div class="verify-box">
+        <div class="auth-form-area">
 
-            <p class="verify-text">
-                Enviamos um link de verificação para
-                {% if email %}<strong>{{ email }}</strong>{% else %}o endereço informado{% endif %}.
-                Acesse sua caixa de entrada e clique no link para confirmar sua conta.
-            </p>
+            <div class="auth-mobile-logo">
+                <span class="dc-logo"><img src="/dashboard/static/img/dna-logo-icon.svg" alt="" width="24" height="19"><span class="dc-logo-text">DNA Connect</span></span>
+            </div>
 
-            {% if mensagem %}
-            <p class="verify-message">{{ mensagem }}</p>
-            {% endif %}
+            <main class="login-container">
 
-            <form class="verify-resend-form" method="post" action="/verify-email/resend">
-                <input type="hidden" name="email" value="{{ email }}">
-                <label for="resend_email">Não recebeu o e-mail?</label>
-                <button type="submit" class="login-button">Reenviar e-mail de verificação</button>
-            </form>
+                <div class="form-card">
 
-            <a href="/login/view" class="register-link">Voltar ao login</a>
+                    <div class="verify-icon verify-icon-info">
+                        <svg width="26" height="26" fill="none" stroke="#085efe" stroke-width="1.5" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/></svg>
+                    </div>
+
+                    <div class="verify-box">
+                        <h1 class="login-title" style="text-align:center;">Verifique seu e-mail</h1>
+                        <p class="verify-text">
+                            Enviamos um link de verificação para
+                            {% if email %}<strong style="color:var(--dc-gray-700);">{{ email }}</strong>{% else %}o endereço informado{% endif %}.
+                            Acesse sua caixa de entrada e clique no link para confirmar sua conta.
+                        </p>
+
+                        {% if mensagem %}
+                        <p class="verify-message">{{ mensagem }}</p>
+                        {% endif %}
+
+                        <form class="verify-resend-form" method="post" action="/verify-email/resend">
+                            <input type="hidden" name="email" value="{{ email }}">
+                            <button type="submit" class="login-button">Reenviar e-mail de verificação</button>
+                        </form>
+
+                        <a href="/login/view" class="register-link">Voltar ao login</a>
+                    </div>
+
+                </div>
+
+            </main>
 
         </div>
 
-    </main>
+    </div>
 
 </body>
 </html>
