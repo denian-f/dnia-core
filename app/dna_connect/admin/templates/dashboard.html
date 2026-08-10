@@ -69,10 +69,14 @@
                                 {% endif %}
                             </td>
                             <td>{{ cartao.owner_name if cartao.owner_name else "-" }}</td>
-                            <td>{{ cartao.target_url if cartao.target_url else "-" }}</td>
+                            <td class="cell-truncate" title="{{ cartao.target_url if cartao.target_url else '' }}">{{ cartao.target_url if cartao.target_url else "-" }}</td>
                             <td>{{ cartao.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                             <td>{{ cartao.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                            <td><a class="btn-edit" href="/admin/cards/{{ cartao.code }}/qr">QR Code</a></td>
+                            <td>
+                                <div class="table-actions">
+                                    <a class="btn-edit" href="/admin/cards/{{ cartao.code }}/qr">QR Code</a>
+                                </div>
+                            </td>
                         </tr>
                         {% else %}
                         <tr>

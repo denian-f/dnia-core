@@ -55,14 +55,16 @@
                             <span class="status-pill status-pill-inactive">Inativo</span>
                             {% endif %}
                         </td>
-                        <td>{{ cartao.target_url }}</td>
+                        <td class="cell-truncate" title="{{ cartao.target_url }}">{{ cartao.target_url }}</td>
                         <td>{{ cartao.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td>{{ cartao.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td>
-                            <a class="btn-edit" href="/cards/{{ cartao.code }}/edit">Editar</a>
-                            <form class="remove-card-form" method="post" action="/cards/{{ cartao.code }}/remove">
-                                <button type="submit" class="btn-remove" onclick="return confirm('Deseja realmente remover este cartão?')">Remover</button>
-                            </form>
+                            <div class="table-actions">
+                                <a class="btn-edit" href="/cards/{{ cartao.code }}/edit">Editar</a>
+                                <form class="remove-card-form" method="post" action="/cards/{{ cartao.code }}/remove">
+                                    <button type="submit" class="btn-remove" onclick="return confirm('Deseja realmente remover este cartão?')">Remover</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% else %}

@@ -19,6 +19,14 @@
     color: var(--dc-navy);
 }
 
+@media (min-width: 1024px) {
+
+    .app-content {
+        max-width: 1200px;
+    }
+
+}
+
 .admin-form-container {
     max-width: 480px;
 }

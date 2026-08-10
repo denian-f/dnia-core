@@ -1,5 +1,5 @@
 .app-content {
-    max-width: 960px;
+    max-width: 1024px;
     margin: 0;
     padding: 24px 16px;
 }
@@ -67,7 +67,9 @@
     padding: 16px;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     gap: 4px;
+    min-height: 84px;
 }
 
 .summary-label {
@@ -112,7 +114,7 @@
 .cards-table th,
 .cards-table td {
     text-align: left;
-    padding: 12px 20px;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--dc-gray-200);
 }
 
@@ -122,6 +124,24 @@
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+.cards-table td:first-child {
+    font-weight: 600;
+    color: var(--dc-navy);
+    white-space: nowrap;
+}
+
+.cell-truncate {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cards-table td:last-child {
+    white-space: nowrap;
 }
 
 .cards-table tbody tr:hover {
@@ -173,6 +193,12 @@
     background-color: var(--dc-gray-400);
 }
 
+.table-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .btn-edit {
     display: inline-block;
     padding: 7px 14px;
@@ -182,6 +208,7 @@
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
+    white-space: nowrap;
     transition: background-color 0.15s;
 }
 
@@ -190,8 +217,7 @@
 }
 
 .remove-card-form {
-    display: inline-block;
-    margin: 0 0 0 8px;
+    margin: 0;
 }
 
 .btn-remove {
@@ -202,10 +228,19 @@
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
+    white-space: nowrap;
     cursor: pointer;
     transition: background-color 0.15s;
 }
 
 .btn-remove:hover {
     background-color: var(--dc-error-bg);
+}
+
+@media (max-width: 480px) {
+
+    .table-actions {
+        flex-wrap: wrap;
+    }
+
 }
