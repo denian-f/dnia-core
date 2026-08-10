@@ -56,8 +56,8 @@
                             {% endif %}
                         </td>
                         <td>{{ cartao.target_url }}</td>
-                        <td>{{ cartao.created_at }}</td>
-                        <td>{{ cartao.updated_at }}</td>
+                        <td>{{ cartao.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ cartao.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td>
                             <a class="btn-edit" href="/cards/{{ cartao.code }}/edit">Editar</a>
                             <form class="remove-card-form" method="post" action="/cards/{{ cartao.code }}/remove">

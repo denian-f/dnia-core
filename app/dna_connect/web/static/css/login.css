@@ -20,9 +20,8 @@ body {
     background-size: 28px 28px;
 }
 
-.auth-hero-logo svg {
-    height: 32px;
-    width: auto;
+.auth-hero-logo {
+    text-decoration: none;
 }
 
 .auth-hero-tagline {
@@ -64,12 +63,9 @@ body {
 }
 
 .auth-mobile-logo {
+    display: inline-block;
     margin-bottom: 32px;
-}
-
-.auth-mobile-logo svg {
-    height: 28px;
-    width: auto;
+    text-decoration: none;
 }
 
 .login-container {

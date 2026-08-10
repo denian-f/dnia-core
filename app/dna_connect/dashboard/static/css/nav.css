@@ -14,6 +14,7 @@
     gap: 8px;
     padding: 20px 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-decoration: none;
 }
 
 .app-nav-badge {
@@ -110,6 +111,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    text-decoration: none;
 }
 
 .app-nav-toggle {
@@ -161,10 +163,6 @@
     .app-nav-mobile,
     .app-nav-drawer {
         display: none !important;
-    }
-
-    .app-shell-main {
-        margin-left: var(--dc-sidebar-width);
     }
 
     body.has-sidebar {
