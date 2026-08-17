@@ -25,13 +25,38 @@
         </nav>
 
         <h1 class="admin-title">Cadastrar novo cartão</h1>
-        <p class="admin-subtitle">Registre o código de um cartão físico DNA Connect para disponibilizá-lo no sistema.</p>
+        <p class="admin-subtitle">Gere um código automaticamente ou registre o código de um cartão físico DNA Connect para disponibilizá-lo no sistema.</p>
+
+        <div class="admin-card">
+
+            <p class="admin-quick-title">Criação rápida</p>
+            <p class="admin-quick-text">Não possui um código definido? Gere um novo cartão automaticamente.</p>
+
+            <form method="post" action="/admin/cards/generate">
+                <button type="submit" class="btn-generate">+ Gerar cartão</button>
+            </form>
+
+            {% if codigo_gerado %}
+            <p class="admin-message admin-success">
+                <span>Cartão criado com sucesso! Código: <span class="admin-success-code" id="admin-generated-code">{{ codigo_gerado }}</span></span>
+                <button type="button" class="btn-copy-code" onclick="dnaConnectCopiarCodigoGerado()">Copiar código</button>
+            </p>
+            <span class="admin-copy-feedback" id="admin-generated-feedback"></span>
+            {% endif %}
+
+            {% if erro_geracao %}
+            <p class="admin-message admin-error">{{ erro_geracao }}</p>
+            {% endif %}
+
+        </div>
+
+        <p class="admin-section-divider">Cadastro manual</p>
 
         <div class="admin-card">
 
             <div class="admin-hint">
                 <svg width="18" height="18" fill="none" stroke="var(--dc-brand)" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                <p>O código está impresso no verso do cartão físico. Exemplo: <strong>DNAC-A7K9P2</strong></p>
+                <p>Já possui um código físico? Informe o código impresso no cartão. Exemplo: <strong>DNAC-A7K9P2</strong></p>
             </div>
 
             <form class="admin-form" method="post" action="/admin/cards/new">
@@ -54,6 +79,20 @@
 
         </main>
     </div>
+
+    {% if codigo_gerado %}
+    <script>
+        function dnaConnectCopiarCodigoGerado() {
+            var valor = document.getElementById("admin-generated-code").textContent;
+            var feedback = document.getElementById("admin-generated-feedback");
+            navigator.clipboard.writeText(valor).then(function () {
+                feedback.textContent = "Código copiado!";
+            }).catch(function () {
+                feedback.textContent = "Não foi possível copiar automaticamente.";
+            });
+        }
+    </script>
+    {% endif %}
 
 </body>
 </html>

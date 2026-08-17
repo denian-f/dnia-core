@@ -7,7 +7,8 @@ from fastapi.templating import Jinja2Templates
 from app.dna_connect.auth.dependencies import get_current_admin_web
 from app.dna_connect.admin.service import (
     listar_todos_cartoes_admin,
-    criar_cartao_admin
+    criar_cartao_admin,
+    gerar_cartao_automatico_admin
 )
 from app.dna_connect.cards.service import gerar_qr_code_cartao
 
@@ -96,6 +97,43 @@ async def admin_create_card_submit(
         )
 
     return RedirectResponse(url="/admin", status_code=302)
+
+
+@router.post("/admin/cards/generate")
+def admin_generate_card_submit(
+    request: Request,
+    current_user=Depends(get_current_admin_web)
+):
+    """
+    Criação rápida: gera automaticamente um cartão disponível,
+    reutilizando o Service administrativo (que por sua vez reutiliza o
+    CardRepository já existente). Diferente do cadastro manual, aqui o
+    resultado é re-renderizado na própria página com o código gerado,
+    para que o admin possa copiá-lo.
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    resultado = gerar_cartao_automatico_admin()
+
+    if resultado["status"] == "generation_failed":
+
+        return templates.TemplateResponse(
+            request=request,
+            name="create_card.html",
+            context={
+                "erro": None,
+                "erro_geracao": "Não foi possível gerar um código único no momento. Tente novamente."
+            },
+            status_code=500
+        )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="create_card.html",
+        context={"erro": None, "codigo_gerado": resultado["card_code"]}
+    )
 
 
 @router.get("/admin/cards/{card_code}/qr")

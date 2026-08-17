@@ -1,4 +1,6 @@
 import io
+import secrets
+import string
 
 import qrcode
 from qrcode.constants import ERROR_CORRECT_M
@@ -10,6 +12,27 @@ from app.dna_connect.email import config as email_config
 
 
 MODOS_VALIDOS = ("custom_link", "business_card")
+
+_CODE_PREFIX = "DNAC"
+_CODE_SUFFIX_LENGTH = 6
+_CODE_ALPHABET = string.ascii_uppercase + string.digits
+
+
+def gerar_codigo_cartao() -> str:
+    """
+    Sorteia um código no mesmo padrão usado pelo cadastro manual
+    (ex: DNAC-A7K9P2): prefixo fixo + 6 caracteres alfanuméricos
+    maiúsculos, usando o gerador do módulo secrets (não determinístico,
+    adequado para geração de identificadores). Não garante unicidade
+    sozinho — quem chamar precisa checar colisão contra o banco antes
+    de persistir (ver gerar_cartao_automatico_admin, em admin/service).
+    """
+
+    sufixo = "".join(
+        secrets.choice(_CODE_ALPHABET) for _ in range(_CODE_SUFFIX_LENGTH)
+    )
+
+    return f"{_CODE_PREFIX}-{sufixo}"
 
 
 def init_cards_db():
