@@ -333,6 +333,20 @@ class CardRepository:
 
         self.db.commit()
 
+    def excluir_cartao(self, code: str):
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            DELETE FROM cards
+
+            WHERE code = %s
+
+        """, (code,))
+
+        self.db.commit()
+
     def listar_todos_admin(self):
 
         cursor = self.db.cursor()

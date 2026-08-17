@@ -8,7 +8,8 @@ from app.dna_connect.auth.dependencies import get_current_admin_web
 from app.dna_connect.admin.service import (
     listar_todos_cartoes_admin,
     criar_cartao_admin,
-    gerar_cartao_automatico_admin
+    gerar_cartao_automatico_admin,
+    excluir_cartao_admin
 )
 from app.dna_connect.cards.service import gerar_qr_code_cartao
 
@@ -133,6 +134,42 @@ def admin_generate_card_submit(
         request=request,
         name="create_card.html",
         context={"erro": None, "codigo_gerado": resultado["card_code"]}
+    )
+
+
+@router.post("/admin/cards/{card_code}/delete")
+def admin_delete_card_submit(
+    card_code: str,
+    request: Request,
+    current_user=Depends(get_current_admin_web)
+):
+    """
+    Exclui um cartão disponível, reutilizando o Service administrativo.
+    Segue o mesmo padrão do restante do módulo /admin: re-renderiza a
+    própria página (aqui, o dashboard) com o resultado, em vez de
+    redirecionar, já com a listagem e o resumo atualizados.
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    resultado = excluir_cartao_admin(card_code)
+
+    dados = listar_todos_cartoes_admin()
+
+    if resultado["status"] == "not_found":
+        dados["erro"] = "Cartão não encontrado."
+    elif resultado["status"] == "activated":
+        dados["erro"] = "Este cartão já está ativado e não pode ser excluído."
+    elif resultado["status"] == "delete_failed":
+        dados["erro"] = "Não foi possível excluir este cartão."
+    else:
+        dados["sucesso"] = "Cartão excluído com sucesso."
+
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard.html",
+        context=dados
     )
 
 

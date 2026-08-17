@@ -27,6 +27,14 @@
             </a>
         </section>
 
+        {% if erro %}
+        <p class="admin-message admin-error">{{ erro }}</p>
+        {% endif %}
+
+        {% if sucesso %}
+        <p class="admin-message admin-success">{{ sucesso }}</p>
+        {% endif %}
+
         <section class="dashboard-summary">
             <div class="summary-card">
                 <span class="summary-label">Total de cartões</span>
@@ -75,6 +83,9 @@
                             <td>
                                 <div class="table-actions">
                                     <a class="btn-edit" href="/admin/cards/{{ cartao.code }}/qr">QR Code</a>
+                                    <form class="remove-card-form" method="post" action="/admin/cards/{{ cartao.code }}/delete">
+                                        <button type="submit" class="btn-remove" onclick="return confirm('Tem certeza que deseja excluir o cartão {{ cartao.code }}?\n\nEssa ação não poderá ser desfeita.')">Excluir</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

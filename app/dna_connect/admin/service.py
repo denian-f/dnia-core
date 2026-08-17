@@ -126,3 +126,47 @@ def gerar_cartao_automatico_admin():
         repo.fechar()
 
     return {"status": "generation_failed"}
+
+
+def excluir_cartao_admin(card_code: str):
+    """
+    Exclui definitivamente um cartão disponível (nunca ativado). Um
+    cartão ativado nunca é excluído: ele já pode ter sido entregue a um
+    cliente e possuir relacionamentos importantes (owner, target_url,
+    perfil de cartão de visita), então a exclusão física é reservada
+    apenas a cartões que ainda não têm nenhum uso real associado.
+
+    O catch de ForeignKeyViolation é só uma rede de segurança: como
+    card_business_profiles só é criado para cartões com owner_id
+    preenchido (ou seja, já ativados), um cartão disponível nunca
+    deveria ter esse relacionamento — mas se algum dado legado quebrar
+    essa premissa, a exclusão falha de forma segura em vez de estourar
+    um erro para o usuário.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+        if not card:
+            return {"status": "not_found"}
+
+        if card.activated:
+            return {"status": "activated"}
+
+        try:
+
+            repo.excluir_cartao(card_code)
+
+        except psycopg.errors.ForeignKeyViolation:
+
+            repo.db.rollback()
+            return {"status": "delete_failed"}
+
+    finally:
+
+        repo.fechar()
+
+    return {"status": "deleted", "card_code": card_code}
