@@ -6,7 +6,7 @@
     <title>{{ nome or "Cartão de visita" }} - DNA Connect</title>
     <link rel="stylesheet" href="/cards/static/css/business_card.css">
 </head>
-<body class="{{ 'text-light' if texto_claro else 'text-dark' }}" style="background-color: {{ cor_fundo }}; --dc-accent: {{ cor_destaque }}; --dc-accent-soft: {{ cor_destaque_soft }}; --dc-accent-text: {{ cor_destaque_texto }};">
+<body class="{{ 'text-light' if texto_claro else 'text-dark' }}" style="{{ estilo_fundo }} --dc-accent: {{ cor_destaque }}; --dc-accent-soft: {{ cor_destaque_soft }}; --dc-accent-text: {{ cor_destaque_texto }};">
 
     <main class="bc-card">
 

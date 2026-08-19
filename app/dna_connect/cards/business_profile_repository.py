@@ -24,7 +24,11 @@ CAMPOS_PERFIL = [
     "bio",
     "background_color",
     "google_maps_url",
-    "accent_color"
+    "accent_color",
+    "background_type",
+    "gradient_color_1",
+    "gradient_color_2",
+    "gradient_direction"
 ]
 
 
@@ -135,6 +139,89 @@ class CardBusinessProfileRepository:
 
         self.db.commit()
 
+    def adicionar_colunas_fundo_avancado(self):
+        """
+        Evolui a personalização do fundo do cartão de visita de uma
+        única cor sólida para 3 modos (solid/gradient/image).
+
+        background_type é opcional (sem NOT NULL) de propósito: cartões
+        já existentes só têm background_color preenchido, então essa
+        coluna nasce NULL para eles — o próprio código de leitura (ver
+        card_business_profile, em cards/routes.py) trata NULL como
+        'solid', preservando exatamente o comportamento atual sem
+        precisar migrar nenhum dado. As colunas de imagem de fundo
+        seguem o mesmo padrão já usado para profile_photo (Sprint 28):
+        bytes salvos direto no Postgres, sem storage externo.
+        """
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            ALTER TABLE card_business_profiles
+            ADD COLUMN IF NOT EXISTS background_type VARCHAR(20)
+
+        """)
+
+        cursor.execute("""
+
+            DO $$
+            BEGIN
+
+                ALTER TABLE card_business_profiles
+                ADD CONSTRAINT chk_card_business_profiles_background_type
+                CHECK (background_type IS NULL OR background_type IN ('solid', 'gradient', 'image'));
+
+            EXCEPTION
+                WHEN duplicate_object THEN NULL;
+            END $$;
+
+        """)
+
+        cursor.execute("""
+
+            ALTER TABLE card_business_profiles
+            ADD COLUMN IF NOT EXISTS gradient_color_1 TEXT
+
+        """)
+
+        cursor.execute("""
+
+            ALTER TABLE card_business_profiles
+            ADD COLUMN IF NOT EXISTS gradient_color_2 TEXT
+
+        """)
+
+        cursor.execute("""
+
+            ALTER TABLE card_business_profiles
+            ADD COLUMN IF NOT EXISTS gradient_direction VARCHAR(20)
+
+        """)
+
+        cursor.execute("""
+
+            ALTER TABLE card_business_profiles
+            ADD COLUMN IF NOT EXISTS background_image TEXT
+
+        """)
+
+        cursor.execute("""
+
+            ALTER TABLE card_business_profiles
+            ADD COLUMN IF NOT EXISTS background_image_data BYTEA
+
+        """)
+
+        cursor.execute("""
+
+            ALTER TABLE card_business_profiles
+            ADD COLUMN IF NOT EXISTS background_image_content_type VARCHAR(50)
+
+        """)
+
+        self.db.commit()
+
     # =====================================================
     # PERFIL
     # =====================================================
@@ -150,6 +237,7 @@ class CardBusinessProfileRepository:
                 id,
                 card_id,
                 profile_photo,
+                background_image,
                 {", ".join(CAMPOS_PERFIL)},
                 created_at,
                 updated_at
@@ -165,14 +253,15 @@ class CardBusinessProfileRepository:
         if not linha:
             return None
 
-        dados_campos = dict(zip(CAMPOS_PERFIL, linha[3:3 + len(CAMPOS_PERFIL)]))
+        dados_campos = dict(zip(CAMPOS_PERFIL, linha[4:4 + len(CAMPOS_PERFIL)]))
 
         return CardBusinessProfile(
             id=linha[0],
             card_id=linha[1],
             profile_photo=linha[2],
-            created_at=linha[3 + len(CAMPOS_PERFIL)],
-            updated_at=linha[4 + len(CAMPOS_PERFIL)],
+            background_image=linha[3],
+            created_at=linha[4 + len(CAMPOS_PERFIL)],
+            updated_at=linha[5 + len(CAMPOS_PERFIL)],
             **dados_campos
         )
 
@@ -286,6 +375,86 @@ class CardBusinessProfileRepository:
         cursor.execute("""
 
             SELECT profile_photo_data, profile_photo_content_type
+
+            FROM card_business_profiles
+
+            WHERE card_id = %s
+
+        """, (card_id,))
+
+        linha = cursor.fetchone()
+
+        if not linha or linha[0] is None:
+            return None
+
+        return {"dados": bytes(linha[0]), "content_type": linha[1]}
+
+    # =====================================================
+    # IMAGEM DE FUNDO (background_type = image)
+    # =====================================================
+
+    def salvar_imagem_fundo(self, card_id: int, dados_binarios: bytes, content_type: str, url_publica: str):
+        """
+        Insere ou atualiza (upsert) a imagem de fundo do cartão de
+        visita. Mesmo padrão de salvar_foto: substitui integralmente a
+        imagem anterior, sem histórico.
+        """
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            INSERT INTO card_business_profiles (
+                card_id, background_image, background_image_data, background_image_content_type
+            )
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (card_id) DO UPDATE SET
+                background_image = EXCLUDED.background_image,
+                background_image_data = EXCLUDED.background_image_data,
+                background_image_content_type = EXCLUDED.background_image_content_type,
+                updated_at = NOW()
+
+        """, (card_id, url_publica, dados_binarios, content_type))
+
+        self.db.commit()
+
+    def remover_imagem_fundo(self, card_id: int):
+        """
+        Remove a imagem de fundo (o cartão volta a usar cor sólida ou
+        gradiente, conforme o background_type salvo). Não afeta os
+        demais campos do perfil.
+        """
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            UPDATE card_business_profiles
+
+            SET
+
+                background_image = NULL,
+                background_image_data = NULL,
+                background_image_content_type = NULL,
+                updated_at = NOW()
+
+            WHERE card_id = %s
+
+        """, (card_id,))
+
+        self.db.commit()
+
+    def buscar_imagem_fundo_por_card_id(self, card_id: int):
+        """
+        Retorna os bytes e o content-type da imagem de fundo ativa,
+        usado pela rota pública que serve a imagem.
+        """
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            SELECT background_image_data, background_image_content_type
 
             FROM card_business_profiles
 

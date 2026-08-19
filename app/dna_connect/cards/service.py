@@ -63,6 +63,7 @@ def init_cards_db():
         perfil_repo.criar_tabela()
         perfil_repo.adicionar_colunas_foto_upload()
         perfil_repo.adicionar_colunas_personalizacao()
+        perfil_repo.adicionar_colunas_fundo_avancado()
 
     finally:
 
@@ -438,6 +439,126 @@ def obter_foto_cartao_visita(card_code: str):
     try:
 
         return perfil_repo.buscar_foto_por_card_id(card.id)
+
+    finally:
+
+        perfil_repo.fechar()
+
+
+def construir_url_imagem_fundo_cartao(card_code: str) -> str:
+    """
+    Caminho interno (relativo, sem domínio) que serve a imagem de fundo
+    do cartão de visita enviada por upload — mesmo padrão de
+    construir_url_foto_cartao, para a segunda imagem opcional do perfil.
+    """
+
+    return f"/c/{card_code}/background-image"
+
+
+def salvar_imagem_fundo_cartao_visita(card_code: str, owner_id: int, dados_binarios: bytes, content_type: str):
+    """
+    Salva a imagem de fundo (background_type = image) enviada por
+    upload. Substitui qualquer imagem de fundo anterior — só existe uma
+    imagem de fundo ativa por cartão. Valida a posse do cartão antes de
+    gravar, exatamente como salvar_foto_cartao_visita.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+        if not card:
+            return {"status": "not_found"}
+
+        if card.owner_id != owner_id:
+            return {"status": "forbidden"}
+
+    finally:
+
+        repo.fechar()
+
+    perfil_repo = CardBusinessProfileRepository()
+
+    try:
+
+        perfil_repo.salvar_imagem_fundo(
+            card_id=card.id,
+            dados_binarios=dados_binarios,
+            content_type=content_type,
+            url_publica=construir_url_imagem_fundo_cartao(card_code)
+        )
+
+    finally:
+
+        perfil_repo.fechar()
+
+    return {"status": "saved", "card_code": card_code}
+
+
+def remover_imagem_fundo_cartao_visita(card_code: str, owner_id: int):
+    """
+    Remove a imagem de fundo do cartão de visita. Não afeta os demais
+    campos do perfil nem o background_type salvo (se o cartão continuar
+    marcado como mode=image sem imagem, a renderização pública cai de
+    volta para a cor sólida padrão — ver card_business_profile).
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+        if not card:
+            return {"status": "not_found"}
+
+        if card.owner_id != owner_id:
+            return {"status": "forbidden"}
+
+    finally:
+
+        repo.fechar()
+
+    perfil_repo = CardBusinessProfileRepository()
+
+    try:
+
+        perfil_repo.remover_imagem_fundo(card_id=card.id)
+
+    finally:
+
+        perfil_repo.fechar()
+
+    return {"status": "removed", "card_code": card_code}
+
+
+def obter_imagem_fundo_cartao_visita(card_code: str):
+    """
+    Retorna os bytes/content-type da imagem de fundo ativa de um
+    cartão, para a rota pública que serve a imagem. Não faz verificação
+    de dono — mesmo nível de exposição de obter_foto_cartao_visita.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+    finally:
+
+        repo.fechar()
+
+    if not card:
+        return None
+
+    perfil_repo = CardBusinessProfileRepository()
+
+    try:
+
+        return perfil_repo.buscar_imagem_fundo_por_card_id(card.id)
 
     finally:
 

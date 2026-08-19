@@ -17,6 +17,9 @@ from app.dna_connect.cards.service import (
     salvar_foto_cartao_visita,
     remover_foto_cartao_visita,
     obter_foto_cartao_visita,
+    salvar_imagem_fundo_cartao_visita,
+    remover_imagem_fundo_cartao_visita,
+    obter_imagem_fundo_cartao_visita,
     definir_modo_cartao,
     construir_url_publica_cartao,
     gerar_qr_code_cartao,
@@ -77,6 +80,39 @@ def _cor_destaque_valida(valor):
         return valor.strip()
 
     return _COR_DESTAQUE_PADRAO
+
+
+_TIPOS_FUNDO_VALIDOS = ("solid", "gradient", "image")
+_TIPO_FUNDO_PADRAO = "solid"
+
+_DIRECOES_GRADIENTE = {
+    "horizontal": "to right",
+    "vertical": "to bottom",
+    "diagonal": "to bottom right"
+}
+_DIRECAO_GRADIENTE_PADRAO = "diagonal"
+
+
+def _tipo_fundo_valido(valor):
+    """
+    Cartões existentes nunca tiveram background_type (só
+    background_color) — tratar None/valor ausente como 'solid' é o que
+    preserva a aparência atual deles sem exigir nenhuma migração de
+    dados nem reconfiguração manual.
+    """
+
+    if valor in _TIPOS_FUNDO_VALIDOS:
+        return valor
+
+    return _TIPO_FUNDO_PADRAO
+
+
+def _direcao_gradiente_valida(valor):
+
+    if valor in _DIRECOES_GRADIENTE:
+        return valor
+
+    return _DIRECAO_GRADIENTE_PADRAO
 
 
 def _hex_para_rgb(hex_color: str):
@@ -276,6 +312,18 @@ def _validar_dados_perfil(form):
     if dados["accent_color"] and not _HEX_COLOR.fullmatch(dados["accent_color"]):
         erros.append("Cor de destaque deve ser um hexadecimal válido (ex: #3b82f6).")
 
+    if dados["background_type"] and dados["background_type"] not in _TIPOS_FUNDO_VALIDOS:
+        erros.append("Tipo de fundo inválido.")
+
+    if dados["gradient_color_1"] and not _HEX_COLOR.fullmatch(dados["gradient_color_1"]):
+        erros.append("Cor 1 do gradiente deve ser um hexadecimal válido (ex: #05070d).")
+
+    if dados["gradient_color_2"] and not _HEX_COLOR.fullmatch(dados["gradient_color_2"]):
+        erros.append("Cor 2 do gradiente deve ser um hexadecimal válido (ex: #0a47ff).")
+
+    if dados["gradient_direction"] and dados["gradient_direction"] not in _DIRECOES_GRADIENTE:
+        erros.append("Direção do gradiente inválida.")
+
     if dados["google_maps_url"] and not dados["google_maps_url"].startswith(("http://", "https://")):
         erros.append("O link do Google Maps deve ser uma URL válida, iniciando com http:// ou https://.")
 
@@ -382,7 +430,39 @@ def card_business_profile(card_code: str, request: Request):
             context={}
         )
 
-    cor_fundo = _cor_fundo_valida(perfil.background_color)
+    tipo_fundo = _tipo_fundo_valido(perfil.background_type)
+
+    if tipo_fundo == "gradient" and perfil.gradient_color_1 and perfil.gradient_color_2:
+
+        cor1 = _cor_fundo_valida(perfil.gradient_color_1)
+        cor2 = _cor_fundo_valida(perfil.gradient_color_2)
+        direcao_css = _DIRECOES_GRADIENTE[_direcao_gradiente_valida(perfil.gradient_direction)]
+
+        estilo_fundo = f"background-image: linear-gradient({direcao_css}, {cor1}, {cor2});"
+        texto_claro = _texto_claro_sobre_fundo(cor1) and _texto_claro_sobre_fundo(cor2)
+
+    elif tipo_fundo == "image" and perfil.background_image:
+
+        # Sem aspas de propósito: url_imagem é sempre um caminho interno
+        # controlado (/c/{code}/background-image, nunca digitado pelo
+        # usuário), então dispensa aspas em CSS — e evita depender do
+        # autoescape do Jinja (que trocaria ' por &#39; no HTML e só
+        # funcionaria por o navegador decodificar a entidade de volta).
+        url_imagem = _url_segura(perfil.background_image)
+        estilo_fundo = f"background-image: url({url_imagem}); background-size: cover; background-position: center; background-repeat: no-repeat;"
+        # Não é possível calcular a luminância real da imagem sem
+        # processar os pixels; texto claro é o padrão mais seguro para
+        # a maioria das fotos usadas como fundo de cartão.
+        texto_claro = True
+
+    else:
+
+        # solid (ou gradient/image escolhidos mas ainda sem cores/imagem
+        # salvas) caem aqui — mesmo comportamento de sempre.
+        cor_fundo = _cor_fundo_valida(perfil.background_color)
+        estilo_fundo = f"background-color: {cor_fundo};"
+        texto_claro = _texto_claro_sobre_fundo(cor_fundo)
+
     cor_destaque = _cor_destaque_valida(perfil.accent_color)
 
     return templates.TemplateResponse(
@@ -406,8 +486,8 @@ def card_business_profile(card_code: str, request: Request):
             "google_maps_link": _url_segura(perfil.google_maps_url),
             "pix_key": perfil.pix_key,
             "pix_key_type": perfil.pix_key_type,
-            "cor_fundo": cor_fundo,
-            "texto_claro": _texto_claro_sobre_fundo(cor_fundo),
+            "estilo_fundo": estilo_fundo,
+            "texto_claro": texto_claro,
             "cor_destaque": cor_destaque,
             "cor_destaque_soft": _cor_com_opacidade(cor_destaque, 0.16),
             "cor_destaque_texto": "#ffffff" if _texto_claro_sobre_fundo(cor_destaque) else "#111827"
@@ -430,6 +510,22 @@ def card_business_photo(card_code: str):
         raise HTTPException(status_code=404, detail="Foto não encontrada.")
 
     return Response(content=foto["dados"], media_type=foto["content_type"])
+
+
+@router.get("/c/{card_code}/background-image")
+def card_business_background_image(card_code: str):
+    """
+    Serve os bytes da imagem de fundo (background_type = image)
+    enviada por upload. Mesmo nível de exposição/rota pública de
+    card_business_photo, para a segunda imagem opcional do perfil.
+    """
+
+    imagem = obter_imagem_fundo_cartao_visita(card_code)
+
+    if not imagem:
+        raise HTTPException(status_code=404, detail="Imagem de fundo não encontrada.")
+
+    return Response(content=imagem["dados"], media_type=imagem["content_type"])
 
 
 @router.post("/activate")
@@ -713,9 +809,11 @@ def _renderizar_pagina_edicao(
     cartao = resultado["card"]
     perfil_real = resultado["profile"]
     perfil = dados_pendentes if dados_pendentes is not None else perfil_real
-    # foto_atual reflete sempre o que está de fato salvo no banco, nunca
-    # o dict de dados pendentes (que não inclui foto — ver save_business_profile)
+    # foto_atual/fundo_imagem_atual refletem sempre o que está de fato
+    # salvo no banco, nunca o dict de dados pendentes (que não inclui
+    # essas imagens — ver save_business_profile)
     foto_atual = _url_segura(perfil_real.profile_photo) if perfil_real else None
+    fundo_imagem_atual = _url_segura(perfil_real.background_image) if perfil_real else None
 
     return templates.TemplateResponse(
         request=request,
@@ -724,6 +822,7 @@ def _renderizar_pagina_edicao(
             "cartao": cartao,
             "perfil": perfil,
             "foto_atual": foto_atual,
+            "fundo_imagem_atual": fundo_imagem_atual,
             "url_cartao_fisico": construir_url_publica_cartao(cartao.code),
             "url_qr_cartao": f"/cards/{cartao.code}/qr",
             "erro": erro,
@@ -880,6 +979,19 @@ async def save_business_profile(
         if erro_foto:
             erros.append(erro_foto)
 
+    conteudo_fundo = None
+    content_type_fundo = None
+
+    arquivo_fundo = form.get("background_image_file")
+
+    if isinstance(arquivo_fundo, UploadFile) and arquivo_fundo.filename:
+
+        conteudo_fundo = await arquivo_fundo.read()
+        content_type_fundo, erro_fundo = _validar_foto(conteudo_fundo)
+
+        if erro_fundo:
+            erros.append(erro_fundo)
+
     if erros:
 
         return _renderizar_pagina_edicao(
@@ -912,6 +1024,15 @@ async def save_business_profile(
             content_type=content_type_foto
         )
 
+    if conteudo_fundo is not None:
+
+        salvar_imagem_fundo_cartao_visita(
+            card_code,
+            owner_id=current_user.id,
+            dados_binarios=conteudo_fundo,
+            content_type=content_type_fundo
+        )
+
     definir_modo_cartao(card_code, owner_id=current_user.id, mode="business_card")
 
     return RedirectResponse(url=f"/cards/{card_code}/edit", status_code=302)
@@ -931,6 +1052,35 @@ async def remove_business_profile_photo(
         return RedirectResponse(url="/login/view", status_code=302)
 
     resultado = remover_foto_cartao_visita(card_code, owner_id=current_user.id)
+
+    if resultado["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Cartão não encontrado.")
+
+    if resultado["status"] == "forbidden":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Você não tem permissão para editar este cartão."
+        )
+
+    return RedirectResponse(url=f"/cards/{card_code}/edit", status_code=302)
+
+
+@router.post("/cards/{card_code}/business-profile/background-image/remove")
+async def remove_business_profile_background_image(
+    card_code: str,
+    current_user=Depends(get_optional_user)
+):
+    """
+    Remove a imagem de fundo do cartão de visita. Não afeta os demais
+    campos do perfil, o modo do cartão nem o background_type salvo —
+    mesmo padrão de remove_business_profile_photo.
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    resultado = remover_imagem_fundo_cartao_visita(card_code, owner_id=current_user.id)
 
     if resultado["status"] == "not_found":
         raise HTTPException(status_code=404, detail="Cartão não encontrado.")

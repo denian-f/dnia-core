@@ -330,6 +330,69 @@ body {
     background-color: var(--dc-error-bg);
 }
 
+.bg-type-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.bg-type-option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 8px;
+    border-radius: 10px;
+    border: 2px solid var(--dc-gray-200);
+    background-color: #ffffff;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--dc-gray-700);
+    margin: 0;
+    transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.bg-type-option input[type="radio"] {
+    margin: 0;
+    accent-color: var(--dc-brand);
+}
+
+.bg-type-option-active,
+.bg-type-option:has(input:checked) {
+    border-color: var(--dc-brand);
+    background-color: var(--dc-brand-light);
+    color: var(--dc-brand);
+}
+
+.bg-type-fields {
+    display: none;
+}
+
+.bg-type-fields-active {
+    display: block;
+}
+
+.photo-field-wide {
+    align-items: stretch;
+    flex-direction: column;
+}
+
+.photo-preview-wide {
+    width: 100%;
+    height: 96px;
+}
+
+.photo-preview-wide .photo-preview-img,
+.photo-preview-wide .photo-preview-placeholder {
+    width: 100%;
+    height: 96px;
+    border-radius: 12px;
+}
+
 .color-field {
     display: flex;
     align-items: center;

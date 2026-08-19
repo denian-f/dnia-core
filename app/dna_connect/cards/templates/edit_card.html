@@ -175,10 +175,63 @@
                 <fieldset>
                     <legend>Aparência</legend>
 
-                    <label for="f-background_color">Cor de fundo</label>
-                    <div class="color-field">
-                        <input type="color" id="f-background_color_picker" value="{{ perfil.background_color or '#05070d' }}">
-                        <input type="text" id="f-background_color" name="background_color" value="{{ perfil.background_color or '' }}" placeholder="#05070d">
+                    <label>Tipo de fundo</label>
+                    <div class="bg-type-selector" id="bg-type-selector">
+                        <label class="bg-type-option" data-bg-type="solid">
+                            <input type="radio" name="background_type" value="solid" id="f-bg-type-solid" {{ 'checked' if (perfil.background_type or 'solid') == 'solid' else '' }}>
+                            <span>Cor sólida</span>
+                        </label>
+                        <label class="bg-type-option" data-bg-type="gradient">
+                            <input type="radio" name="background_type" value="gradient" id="f-bg-type-gradient" {{ 'checked' if perfil.background_type == 'gradient' else '' }}>
+                            <span>Gradiente</span>
+                        </label>
+                        <label class="bg-type-option" data-bg-type="image">
+                            <input type="radio" name="background_type" value="image" id="f-bg-type-image" {{ 'checked' if perfil.background_type == 'image' else '' }}>
+                            <span>Imagem</span>
+                        </label>
+                    </div>
+
+                    <div class="bg-type-fields" id="bg-fields-solid">
+                        <label for="f-background_color">Cor de fundo</label>
+                        <div class="color-field">
+                            <input type="color" id="f-background_color_picker" value="{{ perfil.background_color or '#05070d' }}">
+                            <input type="text" id="f-background_color" name="background_color" value="{{ perfil.background_color or '' }}" placeholder="#05070d">
+                        </div>
+                    </div>
+
+                    <div class="bg-type-fields" id="bg-fields-gradient">
+                        <label for="f-gradient_color_1">Cor 1</label>
+                        <div class="color-field">
+                            <input type="color" id="f-gradient_color_1_picker" value="{{ perfil.gradient_color_1 or '#05070d' }}">
+                            <input type="text" id="f-gradient_color_1" name="gradient_color_1" value="{{ perfil.gradient_color_1 or '' }}" placeholder="#05070d">
+                        </div>
+
+                        <label for="f-gradient_color_2">Cor 2</label>
+                        <div class="color-field">
+                            <input type="color" id="f-gradient_color_2_picker" value="{{ perfil.gradient_color_2 or '#0a47ff' }}">
+                            <input type="text" id="f-gradient_color_2" name="gradient_color_2" value="{{ perfil.gradient_color_2 or '' }}" placeholder="#0a47ff">
+                        </div>
+
+                        <label for="f-gradient_direction">Direção</label>
+                        <select id="f-gradient_direction" name="gradient_direction">
+                            <option value="horizontal" {{ 'selected' if perfil.gradient_direction == 'horizontal' else '' }}>Horizontal</option>
+                            <option value="vertical" {{ 'selected' if perfil.gradient_direction == 'vertical' else '' }}>Vertical</option>
+                            <option value="diagonal" {{ 'selected' if (perfil.gradient_direction or 'diagonal') == 'diagonal' else '' }}>Diagonal</option>
+                        </select>
+                    </div>
+
+                    <div class="bg-type-fields" id="bg-fields-image">
+                        <label>Imagem de fundo</label>
+                        <div class="photo-field photo-field-wide">
+                            <div class="photo-preview photo-preview-wide">
+                                <img src="{{ fundo_imagem_atual or '' }}" alt="Imagem de fundo atual" class="photo-preview-img" id="bg-image-preview-img" style="{{ '' if fundo_imagem_atual else 'display:none;' }}">
+                                <div class="photo-preview-placeholder" id="bg-image-preview-placeholder" style="{{ 'display:none;' if fundo_imagem_atual else '' }}">—</div>
+                            </div>
+                            <div class="photo-field-actions">
+                                <input type="file" id="f-background_image_file" name="background_image_file" accept="image/jpeg,image/png,image/webp">
+                                <span class="photo-field-hint">JPG, PNG ou WEBP, até 5&nbsp;MB.</span>
+                            </div>
+                        </div>
                     </div>
 
                     <label for="f-accent_color">Cor dos botões / destaques</label>
@@ -198,6 +251,12 @@
             {% if foto_atual %}
             <form method="post" action="/cards/{{ cartao.code }}/business-profile/photo/remove" class="remove-photo-form">
                 <button type="submit" class="btn-remove-photo" onclick="return confirm('Remover a foto atual?')">Remover foto</button>
+            </form>
+            {% endif %}
+
+            {% if fundo_imagem_atual %}
+            <form method="post" action="/cards/{{ cartao.code }}/business-profile/background-image/remove" class="remove-photo-form">
+                <button type="submit" class="btn-remove-photo" onclick="return confirm('Remover a imagem de fundo atual?')">Remover imagem de fundo</button>
             </form>
             {% endif %}
 
@@ -297,7 +356,44 @@
             var accentPicker = document.getElementById("f-accent_color_picker");
             var accentText = document.getElementById("f-accent_color");
 
+            var bgTypeRadios = form.querySelectorAll('input[name="background_type"]');
+            var bgFieldsSolid = document.getElementById("bg-fields-solid");
+            var bgFieldsGradient = document.getElementById("bg-fields-gradient");
+            var bgFieldsImage = document.getElementById("bg-fields-image");
+
+            var grad1Picker = document.getElementById("f-gradient_color_1_picker");
+            var grad1Text = document.getElementById("f-gradient_color_1");
+            var grad2Picker = document.getElementById("f-gradient_color_2_picker");
+            var grad2Text = document.getElementById("f-gradient_color_2");
+            var gradDirection = document.getElementById("f-gradient_direction");
+
+            var bgImageFile = document.getElementById("f-background_image_file");
+            var bgImagePreviewImg = document.getElementById("bg-image-preview-img");
+            var bgImagePreviewPlaceholder = document.getElementById("bg-image-preview-placeholder");
+
+            var fundoImagemAtualUrl = "{{ fundo_imagem_atual or '' }}";
+            if (fundoImagemAtualUrl) {
+                preview.dataset.bgImageUrl = fundoImagemAtualUrl;
+            }
+
+            var DIRECOES_CSS = { horizontal: "to right", vertical: "to bottom", diagonal: "to bottom right" };
+
             var CAMPOS_HEX = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
+
+            function tipoFundoAtual() {
+                var selecionado = form.querySelector('input[name="background_type"]:checked');
+                return selecionado ? selecionado.value : "solid";
+            }
+
+            function atualizarVisibilidadeTipoFundo() {
+                var tipo = tipoFundoAtual();
+                bgFieldsSolid.classList.toggle("bg-type-fields-active", tipo === "solid");
+                bgFieldsGradient.classList.toggle("bg-type-fields-active", tipo === "gradient");
+                bgFieldsImage.classList.toggle("bg-type-fields-active", tipo === "image");
+                bgTypeRadios.forEach(function (radio) {
+                    radio.closest(".bg-type-option").classList.toggle("bg-type-option-active", radio.checked);
+                });
+            }
 
             function paraHex6(hex) {
                 hex = hex.replace("#", "");
@@ -373,10 +469,37 @@
                 document.getElementById("preview-pix").textContent = pix;
                 mostrar(document.getElementById("preview-pix-section"), pix);
 
-                if (CAMPOS_HEX.test(corFundo)) {
+                var tipoFundo = tipoFundoAtual();
+
+                if (tipoFundo === "gradient") {
+
+                    var grad1 = (grad1Text.value || "").trim() || "#05070d";
+                    var grad2 = (grad2Text.value || "").trim() || "#0a47ff";
+
+                    if (CAMPOS_HEX.test(grad1) && CAMPOS_HEX.test(grad2)) {
+                        var direcaoCss = DIRECOES_CSS[gradDirection.value] || DIRECOES_CSS.diagonal;
+                        preview.style.backgroundColor = "";
+                        preview.style.backgroundImage = "linear-gradient(" + direcaoCss + ", " + grad1 + ", " + grad2 + ")";
+                        grad1Picker.value = "#" + paraHex6(grad1);
+                        grad2Picker.value = "#" + paraHex6(grad2);
+                        previewWrapper.className = "preview-panel " + (textoClaro(grad1) && textoClaro(grad2) ? "text-light" : "text-dark");
+                    }
+
+                } else if (tipoFundo === "image") {
+
+                    preview.style.backgroundColor = "";
+                    preview.style.backgroundSize = "cover";
+                    preview.style.backgroundPosition = "center";
+                    preview.style.backgroundImage = preview.dataset.bgImageUrl ? "url('" + preview.dataset.bgImageUrl + "')" : "none";
+                    previewWrapper.className = "preview-panel text-light";
+
+                } else if (CAMPOS_HEX.test(corFundo)) {
+
+                    preview.style.backgroundImage = "";
                     preview.style.backgroundColor = corFundo;
                     bgPicker.value = "#" + paraHex6(corFundo);
                     previewWrapper.className = "preview-panel " + (textoClaro(corFundo) ? "text-light" : "text-dark");
+
                 }
 
                 if (CAMPOS_HEX.test(corDestaque)) {
@@ -400,6 +523,37 @@
                 atualizarPreview();
             });
 
+            grad1Picker.addEventListener("input", function () {
+                grad1Text.value = grad1Picker.value;
+                atualizarPreview();
+            });
+
+            grad2Picker.addEventListener("input", function () {
+                grad2Text.value = grad2Picker.value;
+                atualizarPreview();
+            });
+
+            gradDirection.addEventListener("change", atualizarPreview);
+
+            bgTypeRadios.forEach(function (radio) {
+                radio.addEventListener("change", function () {
+                    atualizarVisibilidadeTipoFundo();
+                    atualizarPreview();
+                });
+            });
+
+            bgImageFile.addEventListener("change", function () {
+                var arquivo = bgImageFile.files && bgImageFile.files[0];
+                if (!arquivo) return;
+                var url = URL.createObjectURL(arquivo);
+                preview.dataset.bgImageUrl = url;
+                bgImagePreviewImg.src = url;
+                bgImagePreviewImg.style.display = "";
+                bgImagePreviewPlaceholder.style.display = "none";
+                atualizarPreview();
+            });
+
+            atualizarVisibilidadeTipoFundo();
             atualizarPreview();
         })();
     </script>

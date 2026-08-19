@@ -40,5 +40,10 @@ class CardBusinessProfile:
     background_color: Optional[str]
     google_maps_url: Optional[str]
     accent_color: Optional[str]
+    background_type: Optional[str]
+    gradient_color_1: Optional[str]
+    gradient_color_2: Optional[str]
+    gradient_direction: Optional[str]
+    background_image: Optional[str]
     created_at: datetime
     updated_at: datetime
