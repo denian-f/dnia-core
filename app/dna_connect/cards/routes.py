@@ -140,6 +140,31 @@ def _texto_claro_sobre_fundo(hex_color: str) -> bool:
     return luminancia < 0.6
 
 
+def _luminancia_media_imagem(dados_binarios: bytes) -> float:
+    """
+    Luminância média aproximada (0 a 1) de uma imagem, usada para
+    decidir claro/escuro quando o fundo é uma imagem — mesmo critério
+    (limiar 0.6) já usado para cor sólida e gradiente em
+    _texto_claro_sobre_fundo, só que aplicado à imagem real em vez de
+    assumir sempre texto claro (fotos claras/coloridas, como um fundo
+    predominantemente amarelo, ficavam com texto branco ilegível).
+
+    Reduz a imagem a uma miniatura em escala de cinza antes de calcular
+    a média — suficiente para estimar o tom geral sem o custo de
+    decodificar a imagem em tamanho real a cada acesso à página pública.
+    """
+
+    imagem = Image.open(io.BytesIO(dados_binarios)).convert("L")
+    imagem.thumbnail((32, 32))
+
+    pixels = list(imagem.getdata())
+
+    if not pixels:
+        return 0.0
+
+    return (sum(pixels) / len(pixels)) / 255
+
+
 def _cor_com_opacidade(hex_color: str, alpha: float) -> str:
     """
     Versão translúcida (rgba) de uma cor hex — usada para os fundos
@@ -450,10 +475,12 @@ def card_business_profile(card_code: str, request: Request):
         # funcionaria por o navegador decodificar a entidade de volta).
         url_imagem = _url_segura(perfil.background_image)
         estilo_fundo = f"background-image: url({url_imagem}); background-size: cover; background-position: center; background-repeat: no-repeat;"
-        # Não é possível calcular a luminância real da imagem sem
-        # processar os pixels; texto claro é o padrão mais seguro para
-        # a maioria das fotos usadas como fundo de cartão.
-        texto_claro = True
+
+        imagem_fundo = obter_imagem_fundo_cartao_visita(card_code)
+        # Se por algum motivo os bytes não puderem ser lidos (nunca deveria
+        # acontecer, já que perfil.background_image só existe quando há
+        # imagem salva), texto claro continua sendo o fallback mais seguro.
+        texto_claro = _luminancia_media_imagem(imagem_fundo["dados"]) < 0.6 if imagem_fundo else True
 
     else:
 

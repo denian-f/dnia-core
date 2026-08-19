@@ -7,7 +7,16 @@
     --dc-accent: #3b82f6;
     --dc-accent-soft: rgba(59, 130, 246, 0.16);
     --dc-accent-text: #ffffff;
-    --dc-text-light-secondary: #9ca3af;
+    /*
+     * #9ca3af (cinza médio) tem luminância ~0.64 — perto demais do
+     * limiar (0.6) que decide claro/escuro em qualquer lugar do
+     * sistema, então "camufla" com facilidade sobre fundos variados
+     * (fotos, gradientes) mesmo quando o card inteiro está em modo
+     * texto claro. Um cinza bem mais claro (~0.9) contrasta de forma
+     * confiável contra a maior parte dos fundos escuros/coloridos sem
+     * precisar de text-shadow.
+     */
+    --dc-text-light-secondary: #e5e7eb;
     --dc-text-dark-secondary: #4b5563;
 }
 
