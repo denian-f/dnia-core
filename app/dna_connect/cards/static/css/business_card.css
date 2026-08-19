@@ -49,23 +49,25 @@ body.text-dark {
  * Liquid Glass: .bc-card é o painel estrutural que fica por cima do
  * fundo personalizável (body), então usa backdrop-filter para
  * "amostrar" o que estiver atrás — cor sólida, gradiente ou imagem —
- * em vez de uma cor fixa. O efeito é sutil de propósito: translucidez
- * leve + blur + realce interno (inset) simulando um reflexo de vidro,
- * sem saturação/brilho exagerados.
+ * em vez de uma cor fixa. O blur precisa ser forte o bastante para
+ * dissolver padrões de bloco grande (ex: uma imagem de fundo com
+ * áreas de cor largas) em manchas suaves — um blur pequeno só amacia
+ * bordas e o fundo continua nítido o bastante para "vazar" o desenho
+ * original por trás do vidro.
  */
 .text-light .bc-card {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    backdrop-filter: blur(24px) saturate(140%);
-    -webkit-backdrop-filter: blur(24px) saturate(140%);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(48px) saturate(150%);
+    -webkit-backdrop-filter: blur(48px) saturate(150%);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .text-dark .bc-card {
-    background: rgba(255, 255, 255, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(24px) saturate(140%);
-    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.68);
+    backdrop-filter: blur(48px) saturate(150%);
+    -webkit-backdrop-filter: blur(48px) saturate(150%);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
