@@ -25,6 +25,8 @@ CAMPOS_PERFIL = [
     "website",
     "pix_key",
     "pix_key_type",
+    "pix_beneficiary_name",
+    "pix_beneficiary_city",
     "bio",
     "background_color",
     "google_maps_url",
@@ -221,6 +223,34 @@ class CardBusinessProfileRepository:
 
             ALTER TABLE card_business_profiles
             ADD COLUMN IF NOT EXISTS background_image_content_type VARCHAR(50)
+
+        """)
+
+        self.db.commit()
+
+    def adicionar_colunas_pix_cobranca(self):
+        """
+        Sprint 5 do roadmap Airgo: nome e cidade do beneficiário,
+        exigidos pelo padrão oficial do Banco Central para montar um
+        QR Code de cobrança Pix válido (BR Code) — sem eles não dá pra
+        gerar o payload, só continuar mostrando a chave (que já
+        funcionava antes e continua funcionando sem essas colunas
+        preenchidas, exatamente como hoje).
+        """
+
+        cursor = self.db.cursor()
+
+        cursor.execute("""
+
+            ALTER TABLE card_business_profiles
+            ADD COLUMN IF NOT EXISTS pix_beneficiary_name TEXT
+
+        """)
+
+        cursor.execute("""
+
+            ALTER TABLE card_business_profiles
+            ADD COLUMN IF NOT EXISTS pix_beneficiary_city TEXT
 
         """)
 

@@ -31,6 +31,8 @@ class CardBusinessProfile:
     website: Optional[str]
     pix_key: Optional[str]
     pix_key_type: Optional[str]
+    pix_beneficiary_name: Optional[str]
+    pix_beneficiary_city: Optional[str]
     bio: Optional[str]
     background_color: Optional[str]
     google_maps_url: Optional[str]

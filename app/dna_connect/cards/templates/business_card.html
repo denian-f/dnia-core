@@ -82,6 +82,26 @@
                 <button type="button" class="bc-pix-copy" onclick="dnaConnectCopiarPix()">Copiar</button>
             </div>
             <span class="bc-pix-feedback" id="bc-pix-feedback"></span>
+
+            {% if pix_cobranca_disponivel %}
+            <div class="bc-pix-charge">
+                <button type="button" class="bc-pix-copy" id="bc-pix-gerar-btn" onclick="dnaConnectMostrarValorPix()">Gerar QR Code Pix</button>
+
+                <div class="bc-pix-valor-wrap" id="bc-pix-valor-wrap" style="display:none;">
+                    <input type="number" id="bc-pix-valor" class="bc-pix-valor-input" min="0.01" step="0.01" placeholder="Valor (opcional)">
+                    <button type="button" class="bc-pix-copy" onclick="dnaConnectGerarQrPix()">Confirmar</button>
+                </div>
+
+                <div class="bc-pix-qr-wrap" id="bc-pix-qr-wrap" style="display:none;">
+                    <img id="bc-pix-qr-img" class="bc-pix-qr-img" alt="QR Code Pix para pagamento">
+                    <div class="bc-pix-row bc-pix-copia-cola-wrap" id="bc-pix-copia-cola-wrap" style="display:none;">
+                        <span class="bc-pix-value" id="bc-pix-copia-cola-value"></span>
+                        <button type="button" class="bc-pix-copy" onclick="dnaConnectCopiarPixCobranca()">Copiar código</button>
+                    </div>
+                    <span class="bc-pix-feedback" id="bc-pix-copia-cola-feedback"></span>
+                </div>
+            </div>
+            {% endif %}
         </section>
         {% endif %}
 
@@ -102,6 +122,41 @@
                 feedback.textContent = "Não foi possível copiar automaticamente.";
             });
         }
+
+        {% if pix_cobranca_disponivel %}
+        function dnaConnectMostrarValorPix() {
+            document.getElementById("bc-pix-gerar-btn").style.display = "none";
+            document.getElementById("bc-pix-valor-wrap").style.display = "";
+        }
+
+        function dnaConnectGerarQrPix() {
+            var valor = document.getElementById("bc-pix-valor").value;
+            var sufixo = valor ? ("?valor=" + encodeURIComponent(valor)) : "";
+
+            document.getElementById("bc-pix-qr-img").src = "/c/{{ card_code }}/pix-qr" + sufixo;
+            document.getElementById("bc-pix-qr-wrap").style.display = "";
+
+            fetch("/c/{{ card_code }}/pix-copia-e-cola" + sufixo)
+                .then(function (resposta) { return resposta.ok ? resposta.text() : ""; })
+                .then(function (codigo) {
+                    document.getElementById("bc-pix-copia-cola-value").textContent = codigo;
+                    document.getElementById("bc-pix-copia-cola-wrap").style.display = codigo ? "" : "none";
+                })
+                .catch(function () {
+                    document.getElementById("bc-pix-copia-cola-wrap").style.display = "none";
+                });
+        }
+
+        function dnaConnectCopiarPixCobranca() {
+            var valor = document.getElementById("bc-pix-copia-cola-value").textContent;
+            var feedback = document.getElementById("bc-pix-copia-cola-feedback");
+            navigator.clipboard.writeText(valor).then(function () {
+                feedback.textContent = "Código copiado!";
+            }).catch(function () {
+                feedback.textContent = "Não foi possível copiar automaticamente.";
+            });
+        }
+        {% endif %}
     </script>
     {% endif %}
 

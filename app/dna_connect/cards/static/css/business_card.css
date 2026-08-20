@@ -294,6 +294,58 @@ body.text-dark {
     min-height: 14px;
 }
 
+.bc-pix-charge {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid;
+}
+
+.text-light .bc-pix-charge {
+    border-color: var(--dc-card-border-dark);
+}
+
+.text-dark .bc-pix-charge {
+    border-color: var(--dc-card-border-light);
+}
+
+.bc-pix-valor-wrap {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.bc-pix-valor-input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--dc-accent);
+    background-color: transparent;
+    color: inherit;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.bc-pix-qr-wrap {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.bc-pix-qr-img {
+    width: 160px;
+    height: 160px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 8px;
+}
+
+.bc-pix-copia-cola-wrap {
+    width: 100%;
+}
+
 .bc-footer {
     margin-top: 28px;
     font-size: 11px;

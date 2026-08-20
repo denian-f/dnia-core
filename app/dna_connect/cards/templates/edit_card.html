@@ -203,6 +203,13 @@
 
                     <label for="f-pix_key_type">Tipo da chave Pix</label>
                     <input type="text" id="f-pix_key_type" name="pix_key_type" value="{{ perfil.pix_key_type or '' }}" placeholder="CPF, e-mail, telefone, aleatória...">
+
+                    <label for="f-pix_beneficiary_name">Nome do beneficiário</label>
+                    <input type="text" id="f-pix_beneficiary_name" name="pix_beneficiary_name" value="{{ perfil.pix_beneficiary_name or '' }}" maxlength="25" placeholder="Até 25 letras">
+                    <span class="field-hint">Aparece no app de quem for pagar. Preencha junto com a cidade para habilitar o QR Code de cobrança Pix na página pública.</span>
+
+                    <label for="f-pix_beneficiary_city">Cidade do beneficiário</label>
+                    <input type="text" id="f-pix_beneficiary_city" name="pix_beneficiary_city" value="{{ perfil.pix_beneficiary_city or '' }}" maxlength="15" placeholder="Até 15 letras">
                 </fieldset>
 
                 <fieldset>

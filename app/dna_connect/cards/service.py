@@ -1,6 +1,8 @@
 import io
 import secrets
 import string
+import unicodedata
+from decimal import Decimal, ROUND_HALF_UP
 
 import qrcode
 from fpdf import FPDF
@@ -67,6 +69,7 @@ def init_cards_db():
         perfil_repo.adicionar_colunas_foto_upload()
         perfil_repo.adicionar_colunas_personalizacao()
         perfil_repo.adicionar_colunas_fundo_avancado()
+        perfil_repo.adicionar_colunas_pix_cobranca()
 
     finally:
 
@@ -897,6 +900,162 @@ def gerar_qr_code_offline_cartao(card_code: str):
         return None
 
     return _renderizar_qr_code(vcard)
+
+
+_PIX_TAMANHO_MAXIMO_CHAVE = 77
+_PIX_TAMANHO_MAXIMO_NOME = 25
+_PIX_TAMANHO_MAXIMO_CIDADE = 15
+
+
+def _tlv_pix(id_campo: str, valor: str) -> str:
+    """
+    Formata um campo do payload Pix no padrão EMV/BR Code do Banco
+    Central: identificador (2 dígitos) + tamanho (2 dígitos) + valor.
+    Todo o payload é uma sequência desses campos concatenados.
+    """
+
+    return f"{id_campo}{len(valor):02d}{valor}"
+
+
+def _crc16_ccitt_pix(payload: str) -> str:
+    """
+    CRC16/CCITT-FALSE (polinômio 0x1021, valor inicial 0xFFFF) — o
+    checksum de 4 dígitos hexadecimais exigido no final de todo
+    payload Pix, calculado sobre o payload inteiro já incluindo o
+    próprio campo do CRC com o valor ainda vazio ("6304").
+    """
+
+    crc = 0xFFFF
+
+    for caractere in payload:
+
+        crc ^= ord(caractere) << 8
+
+        for _ in range(8):
+
+            if crc & 0x8000:
+                crc = ((crc << 1) ^ 0x1021) & 0xFFFF
+            else:
+                crc = (crc << 1) & 0xFFFF
+
+    return f"{crc:04X}"
+
+
+def _sanitizar_texto_pix(texto: str) -> str:
+    """
+    O payload Pix só aceita um conjunto restrito de caracteres (sem
+    acentuação) nos campos de nome/cidade do beneficiário — remove
+    acentos e qualquer caractere que não seja letra/número/espaço.
+    """
+
+    normalizado = unicodedata.normalize("NFD", texto)
+    sem_acento = "".join(c for c in normalizado if unicodedata.category(c) != "Mn")
+
+    return "".join(c for c in sem_acento if c.isalnum() or c.isspace()).strip()
+
+
+def construir_payload_pix(chave: str, nome_beneficiario: str, cidade_beneficiario: str, valor=None) -> str:
+    """
+    Monta o payload do QR Code Pix ("BR Code"), no formato oficial
+    publicado pelo Banco Central — não depende de nenhum gateway de
+    pagamento nem de credenciais externas: é só uma string de texto
+    seguindo essa especificação pública, que qualquer app de banco
+    compatível com Pix sabe ler.
+
+    Importante: isso apenas GERA o código de cobrança. O DNA Connect
+    não recebe nenhuma confirmação de que o pagamento foi feito — isso
+    só o próprio banco do beneficiário sabe. Uma confirmação
+    automática exigiria integração real com um gateway/API bancária,
+    fora do escopo combinado para esta sprint.
+
+    `valor` é opcional: se informado, vem pré-preenchido no app de
+    quem for pagar; se omitido, o pagador digita o valor manualmente.
+    """
+
+    nome = _sanitizar_texto_pix(nome_beneficiario)[:_PIX_TAMANHO_MAXIMO_NOME] or "NAO INFORMADO"
+    cidade = _sanitizar_texto_pix(cidade_beneficiario)[:_PIX_TAMANHO_MAXIMO_CIDADE] or "NAO INFORMADO"
+    chave = chave.strip()[:_PIX_TAMANHO_MAXIMO_CHAVE]
+
+    conta_pix = _tlv_pix("00", "BR.GOV.BCB.PIX") + _tlv_pix("01", chave)
+
+    campos = [
+        _tlv_pix("00", "01"),   # Payload Format Indicator
+        _tlv_pix("01", "11"),   # Point of Initiation Method (11 = estático/reutilizável)
+        _tlv_pix("26", conta_pix),  # Merchant Account Information (dados da chave Pix)
+        _tlv_pix("52", "0000"),  # Merchant Category Code (genérico)
+        _tlv_pix("53", "986"),   # Transaction Currency (986 = BRL)
+    ]
+
+    if valor is not None:
+
+        valor_formatado = str(Decimal(str(valor)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+        campos.append(_tlv_pix("54", valor_formatado))  # Transaction Amount
+
+    campos.append(_tlv_pix("58", "BR"))  # Country Code
+    campos.append(_tlv_pix("59", nome))  # Merchant Name (beneficiário)
+    campos.append(_tlv_pix("60", cidade))  # Merchant City (beneficiário)
+    campos.append(_tlv_pix("62", _tlv_pix("05", "***")))  # Additional Data (sem txid específico)
+
+    payload_para_crc = "".join(campos) + "6304"
+
+    return payload_para_crc + _crc16_ccitt_pix(payload_para_crc)
+
+
+def obter_payload_pix_cartao(card_code: str, valor=None):
+    """
+    Monta o payload Pix de cobrança do cartão, a partir da chave e dos
+    dados de beneficiário salvos no perfil. Retorna None se o cartão
+    não existir, não estiver em modo business_card, ou não tiver os
+    três dados obrigatórios preenchidos (chave, nome e cidade do
+    beneficiário) — sem eles não é possível montar um payload válido.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+    finally:
+
+        repo.fechar()
+
+    if not card or card.mode != "business_card":
+        return None
+
+    perfil_repo = CardBusinessProfileRepository()
+
+    try:
+
+        perfil = perfil_repo.buscar_por_card_id(card.id)
+
+    finally:
+
+        perfil_repo.fechar()
+
+    if not perfil or not perfil.pix_key or not perfil.pix_beneficiary_name or not perfil.pix_beneficiary_city:
+        return None
+
+    return construir_payload_pix(
+        chave=perfil.pix_key,
+        nome_beneficiario=perfil.pix_beneficiary_name,
+        cidade_beneficiario=perfil.pix_beneficiary_city,
+        valor=valor
+    )
+
+
+def gerar_qr_code_pix_cartao(card_code: str, valor=None):
+    """
+    Gera a imagem PNG do QR Code de cobrança Pix do cartão. Retorna
+    None nos mesmos casos de obter_payload_pix_cartao.
+    """
+
+    payload = obter_payload_pix_cartao(card_code, valor=valor)
+
+    if not payload:
+        return None
+
+    return _renderizar_qr_code(payload)
 
 
 _PDF_COR_MARCA = (8, 94, 254)      # --dc-brand

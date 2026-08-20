@@ -28,6 +28,8 @@ from app.dna_connect.cards.service import (
     gerar_qr_code_offline_cartao,
     gerar_pdf_cartao_visita,
     salvar_links_cartao_visita,
+    gerar_qr_code_pix_cartao,
+    obter_payload_pix_cartao,
     ativar_cartao,
     atualizar_link_cartao,
     listar_cartoes_por_owner,
@@ -354,6 +356,16 @@ def _validar_dados_perfil(form):
     if dados["google_maps_url"] and not dados["google_maps_url"].startswith(("http://", "https://")):
         erros.append("O link do Google Maps deve ser uma URL válida, iniciando com http:// ou https://.")
 
+    # Limites exigidos pelo próprio padrão de QR Code Pix do Banco
+    # Central (BR Code) para os campos de nome/cidade do beneficiário —
+    # não são um capricho da interface, um valor maior quebraria o
+    # payload gerado em construir_payload_pix.
+    if dados["pix_beneficiary_name"] and len(dados["pix_beneficiary_name"]) > 25:
+        erros.append("Nome do beneficiário Pix deve ter no máximo 25 caracteres.")
+
+    if dados["pix_beneficiary_city"] and len(dados["pix_beneficiary_city"]) > 15:
+        erros.append("Cidade do beneficiário Pix deve ter no máximo 15 caracteres.")
+
     for campo in _CAMPOS_URL_OU_HANDLE:
 
         if not _valor_sem_esquema_perigoso(dados[campo]):
@@ -571,6 +583,9 @@ def card_business_profile(card_code: str, request: Request):
             "google_maps_link": _url_segura(perfil.google_maps_url),
             "pix_key": perfil.pix_key,
             "pix_key_type": perfil.pix_key_type,
+            "pix_cobranca_disponivel": bool(
+                perfil.pix_key and perfil.pix_beneficiary_name and perfil.pix_beneficiary_city
+            ),
             "estilo_fundo": estilo_fundo,
             "texto_claro": texto_claro,
             "cor_destaque": cor_destaque,
@@ -660,6 +675,60 @@ def card_business_pdf(card_code: str):
             "Content-Disposition": f'attachment; filename="{card_code}.pdf"'
         }
     )
+
+
+def _valor_pix_da_query(valor_str):
+    """
+    Converte o valor digitado pelo pagador (query string, aceita
+    vírgula ou ponto decimal) para float — retorna None se estiver
+    ausente, inválido ou não positivo, caso em que o QR Code é gerado
+    sem valor pré-preenchido (o pagador digita no próprio app do banco).
+    """
+
+    if not valor_str:
+        return None
+
+    try:
+        valor = float(valor_str.strip().replace(",", "."))
+    except ValueError:
+        return None
+
+    return valor if valor > 0 else None
+
+
+@router.get("/c/{card_code}/pix-qr")
+def card_pix_qr(card_code: str, valor: str = None):
+    """
+    Gera o QR Code de cobrança Pix (padrão BR Code do Banco Central) do
+    cartão, com o valor informado pelo pagador no momento (opcional).
+    Rota pública, sem autenticação — mesmo nível de exposição da chave
+    Pix já exibida na própria página. Não confirma pagamento, só gera
+    o código (ver obter_payload_pix_cartao).
+    """
+
+    imagem_png = gerar_qr_code_pix_cartao(card_code, valor=_valor_pix_da_query(valor))
+
+    if imagem_png is None:
+        raise HTTPException(status_code=404, detail="Cobrança Pix não disponível para este cartão.")
+
+    return Response(content=imagem_png, media_type="image/png")
+
+
+@router.get("/c/{card_code}/pix-copia-e-cola")
+def card_pix_copia_cola(card_code: str, valor: str = None):
+    """
+    Retorna o código Pix "copia e cola" (o mesmo payload codificado no
+    QR Code, como texto puro) — usado quando quem vai pagar está no
+    mesmo aparelho que exibe o cartão (não dá pra escanear a própria
+    tela).
+    """
+
+    payload = obter_payload_pix_cartao(card_code, valor=_valor_pix_da_query(valor))
+
+    if payload is None:
+        raise HTTPException(status_code=404, detail="Cobrança Pix não disponível para este cartão.")
+
+    return Response(content=payload, media_type="text/plain")
 
 
 @router.post("/activate")
