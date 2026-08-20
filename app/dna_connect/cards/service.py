@@ -250,11 +250,15 @@ def obter_cartao(card_code: str, owner_id: int):
 def construir_url_publica_cartao(card_code: str) -> str:
     """
     Monta a URL pública permanente do cartão — a mesma usada pelo NFC e
-    pelo QR Code: {APP_BASE_URL}/c/{card_code}. Depende exclusivamente
+    pelo QR Code: {CARD_BASE_URL}/c/{card_code}. Depende exclusivamente
     do código do cartão, nunca de owner_id, activated ou target_url.
+
+    Usa CARD_BASE_URL (não APP_BASE_URL) de propósito: é o domínio que
+    pode ser um subdomínio dedicado ao cartão público (ex:
+    card.dominio.com), separado do domínio de login/e-mail.
     """
 
-    return f"{email_config.APP_BASE_URL}/c/{card_code}"
+    return f"{email_config.CARD_BASE_URL}/c/{card_code}"
 
 
 def definir_modo_cartao(card_code: str, owner_id: int, mode: str):
