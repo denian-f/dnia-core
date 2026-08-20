@@ -438,6 +438,67 @@ body.text-dark {
     width: 100%;
 }
 
+.bc-leads {
+    width: 100%;
+    margin-top: 24px;
+    text-align: left;
+}
+
+.bc-leads-title {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--dc-accent);
+    margin-bottom: 10px;
+}
+
+.bc-leads-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bc-leads-form input,
+.bc-leads-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--dc-accent);
+    background-color: transparent;
+    color: inherit;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.bc-leads-form input::placeholder,
+.bc-leads-form textarea::placeholder {
+    color: currentColor;
+    opacity: 0.55;
+}
+
+.bc-leads-success {
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background-color: var(--dc-accent-soft);
+    color: var(--dc-accent);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.bc-leads-error {
+    margin: 0 0 10px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background-color: rgba(220, 38, 38, 0.12);
+    color: #dc2626;
+    font-size: 13px;
+    font-weight: 600;
+}
+
 .bc-footer {
     margin-top: 28px;
     font-size: 11px;

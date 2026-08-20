@@ -1,3 +1,4 @@
+import csv
 import io
 import secrets
 import string
@@ -13,6 +14,7 @@ from app.dna_connect.cards.repository import CardRepository
 from app.dna_connect.cards.business_profile_repository import CardBusinessProfileRepository
 from app.dna_connect.cards.card_links_repository import CardLinksRepository
 from app.dna_connect.cards.card_catalog_repository import CardCatalogRepository
+from app.dna_connect.cards.card_leads_repository import CardLeadsRepository
 from app.dna_connect.users.service import buscar_usuario_por_email
 from app.dna_connect.email import config as email_config
 
@@ -96,6 +98,16 @@ def init_cards_db():
     finally:
 
         catalog_repo.fechar()
+
+    leads_repo = CardLeadsRepository()
+
+    try:
+
+        leads_repo.criar_tabela()
+
+    finally:
+
+        leads_repo.fechar()
 
 
 def resolver_cartao_publico(code: str):
@@ -535,6 +547,147 @@ def obter_imagem_item_catalogo(item_id: int):
 def construir_url_imagem_item_catalogo(card_code: str, item_id: int) -> str:
 
     return f"/c/{card_code}/catalog/{item_id}/image"
+
+
+def criar_lead_cartao_visita(card_code: str, dados: dict):
+    """
+    Registra um novo lead a partir do formulário de contato da página
+    pública do cartão (Sprint 7 do roadmap Airgo) — rota pública, sem
+    autenticação: é o visitante do cartão deixando o próprio contato,
+    não o dono do cartão preenchendo nada.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+    finally:
+
+        repo.fechar()
+
+    if not card or card.mode != "business_card":
+        return {"status": "not_found"}
+
+    leads_repo = CardLeadsRepository()
+
+    try:
+
+        leads_repo.criar_lead(card.id, dados)
+
+    finally:
+
+        leads_repo.fechar()
+
+    return {"status": "created"}
+
+
+def listar_leads_cartao_visita(card_code: str, owner_id: int):
+    """
+    Lista os leads recebidos pelo cartão, mais recentes primeiro — só
+    o dono do cartão pode ver.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+        if not card:
+            return {"status": "not_found"}
+
+        if card.owner_id != owner_id:
+            return {"status": "forbidden"}
+
+    finally:
+
+        repo.fechar()
+
+    leads_repo = CardLeadsRepository()
+
+    try:
+
+        leads = leads_repo.listar_por_card_id(card.id)
+
+    finally:
+
+        leads_repo.fechar()
+
+    return {"status": "ok", "card": card, "leads": leads}
+
+
+def remover_lead_cartao_visita(card_code: str, owner_id: int, lead_id: int):
+    """
+    Remove um lead — só o dono do cartão ao qual o lead pertence pode
+    remover (checa tanto a posse do cartão quanto se o lead realmente
+    pertence a ele, para um dono não conseguir remover lead de outro
+    cartão só adivinhando o ID).
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+        if not card:
+            return {"status": "not_found"}
+
+        if card.owner_id != owner_id:
+            return {"status": "forbidden"}
+
+    finally:
+
+        repo.fechar()
+
+    leads_repo = CardLeadsRepository()
+
+    try:
+
+        lead = leads_repo.buscar_por_id(lead_id)
+
+        if not lead or lead.card_id != card.id:
+            return {"status": "not_found"}
+
+        leads_repo.remover(lead_id)
+
+    finally:
+
+        leads_repo.fechar()
+
+    return {"status": "removed"}
+
+
+def exportar_leads_csv_cartao_visita(card_code: str, owner_id: int):
+    """
+    Gera um CSV (em memória, nunca persistido em disco) com todos os
+    leads do cartão, para download/planilha — mesma checagem de posse
+    de listar_leads_cartao_visita.
+    """
+
+    resultado = listar_leads_cartao_visita(card_code, owner_id)
+
+    if resultado["status"] != "ok":
+        return resultado
+
+    buffer = io.StringIO()
+    escritor = csv.writer(buffer)
+
+    escritor.writerow(["Nome", "E-mail", "Telefone", "Mensagem", "Data"])
+
+    for lead in resultado["leads"]:
+
+        escritor.writerow([
+            lead.name,
+            lead.email or "",
+            lead.phone or "",
+            lead.message or "",
+            lead.created_at.strftime("%d/%m/%Y %H:%M")
+        ])
+
+    return {"status": "ok", "csv": buffer.getvalue()}
 
 
 def construir_url_foto_cartao(card_code: str) -> str:

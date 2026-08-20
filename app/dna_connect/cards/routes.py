@@ -32,6 +32,10 @@ from app.dna_connect.cards.service import (
     obter_payload_pix_cartao,
     salvar_catalogo_cartao_visita,
     obter_imagem_item_catalogo,
+    criar_lead_cartao_visita,
+    listar_leads_cartao_visita,
+    remover_lead_cartao_visita,
+    exportar_leads_csv_cartao_visita,
     ativar_cartao,
     atualizar_link_cartao,
     listar_cartoes_por_owner,
@@ -560,6 +564,41 @@ async def _validar_catalogo(form):
     return itens, erros
 
 
+_TAMANHO_MAXIMO_MENSAGEM_LEAD = 1000
+
+
+def _validar_lead(form):
+    """
+    Extrai e valida o formulário de contato da página pública (Sprint
+    7). Nome é obrigatório; e-mail e telefone são opcionais, mas pelo
+    menos um dos dois precisa estar preenchido — sem nenhuma forma de
+    contato, o lead não serve pra nada.
+    """
+
+    dados = {
+        "name": (form.get("name") or "").strip(),
+        "email": (form.get("email") or "").strip() or None,
+        "phone": (form.get("phone") or "").strip() or None,
+        "message": (form.get("message") or "").strip() or None
+    }
+
+    erros = []
+
+    if not dados["name"]:
+        erros.append("Nome é obrigatório.")
+
+    if not dados["email"] and not dados["phone"]:
+        erros.append("Informe pelo menos um e-mail ou telefone para contato.")
+
+    if dados["email"] and not _EMAIL_SIMPLES.fullmatch(dados["email"]):
+        erros.append("E-mail em formato inválido.")
+
+    if dados["message"] and len(dados["message"]) > _TAMANHO_MAXIMO_MENSAGEM_LEAD:
+        erros.append(f"A mensagem deve ter no máximo {_TAMANHO_MAXIMO_MENSAGEM_LEAD} caracteres.")
+
+    return dados, erros
+
+
 class ActivateRequest(BaseModel):
 
     card_code: str
@@ -619,7 +658,7 @@ def redirect_card(card_code: str, request: Request):
 
 
 @router.get("/c/{card_code}/cartao-visita")
-def card_business_profile(card_code: str, request: Request):
+def card_business_profile(card_code: str, request: Request, lead: str = None, erro_lead: str = None):
     """
     Página pública do cartão de visita digital (mode=business_card).
 
@@ -631,6 +670,10 @@ def card_business_profile(card_code: str, request: Request):
     - Cartão em modo business_card com perfil: renderiza a página HTML,
       expondo apenas os campos públicos do perfil (nunca id, card_id,
       owner_id ou timestamps).
+
+    `lead`/`erro_lead` (query string) vêm do redirecionamento após o
+    envio do formulário de contato (POST /c/{card_code}/leads) — sem
+    eles, a página normal não passa nenhum dos dois.
     """
 
     resultado = resolver_cartao_visita(card_code)
@@ -718,9 +761,38 @@ def card_business_profile(card_code: str, request: Request):
             "texto_claro": texto_claro,
             "cor_destaque": cor_destaque,
             "cor_destaque_soft": _cor_com_opacidade(cor_destaque, 0.16),
-            "cor_destaque_texto": "#ffffff" if _texto_claro_sobre_fundo(cor_destaque) else "#111827"
+            "cor_destaque_texto": "#ffffff" if _texto_claro_sobre_fundo(cor_destaque) else "#111827",
+            "lead_enviado": lead == "enviado",
+            "erro_lead": erro_lead
         }
     )
+
+
+@router.post("/c/{card_code}/leads")
+async def submit_lead(card_code: str, request: Request):
+    """
+    Recebe o formulário de contato/lead da página pública (Sprint 7).
+    Rota pública, sem autenticação — qualquer visitante pode deixar seu
+    contato. Redireciona de volta para a própria página pública, com
+    um indicador de sucesso/erro na query string (não há sessão nem
+    dado sensível para justificar POST-redirect com corpo).
+    """
+
+    form = await request.form()
+    dados, erros = _validar_lead(form)
+
+    if erros:
+        return RedirectResponse(
+            url=f"/c/{card_code}/cartao-visita?erro_lead={quote(' '.join(erros))}",
+            status_code=302
+        )
+
+    resultado = criar_lead_cartao_visita(card_code, dados)
+
+    if resultado["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Cartão não encontrado.")
+
+    return RedirectResponse(url=f"/c/{card_code}/cartao-visita?lead=enviado", status_code=302)
 
 
 @router.get("/c/{card_code}/photo")
@@ -1579,3 +1651,100 @@ def remove_card(
         )
 
     return RedirectResponse(url="/dashboard/view", status_code=302)
+
+
+@router.get("/cards/{card_code}/leads")
+def view_leads(
+    card_code: str,
+    request: Request,
+    current_user=Depends(get_optional_user)
+):
+    """
+    Lista os leads recebidos pelo cartão (Sprint 7) — só o dono
+    autenticado pode ver.
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    resultado = listar_leads_cartao_visita(card_code, owner_id=current_user.id)
+
+    if resultado["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Cartão não encontrado.")
+
+    if resultado["status"] == "forbidden":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Você não tem permissão para ver os leads deste cartão."
+        )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="leads.html",
+        context={"cartao": resultado["card"], "leads": resultado["leads"]}
+    )
+
+
+@router.get("/cards/{card_code}/leads/export")
+def export_leads(
+    card_code: str,
+    current_user=Depends(get_optional_user)
+):
+    """
+    Baixa os leads do cartão em CSV — mesma checagem de posse de
+    view_leads.
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    resultado = exportar_leads_csv_cartao_visita(card_code, owner_id=current_user.id)
+
+    if resultado["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Cartão não encontrado.")
+
+    if resultado["status"] == "forbidden":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Você não tem permissão para exportar os leads deste cartão."
+        )
+
+    return Response(
+        content=resultado["csv"],
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f'attachment; filename="leads-{card_code}.csv"'
+        }
+    )
+
+
+@router.post("/cards/{card_code}/leads/{lead_id}/delete")
+def delete_lead(
+    card_code: str,
+    lead_id: int,
+    current_user=Depends(get_optional_user)
+):
+    """
+    Remove um lead — mesma checagem de posse de view_leads, mais a
+    checagem de que o lead pertence mesmo a este cartão (ver
+    remover_lead_cartao_visita).
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    resultado = remover_lead_cartao_visita(card_code, owner_id=current_user.id, lead_id=lead_id)
+
+    if resultado["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Lead não encontrado.")
+
+    if resultado["status"] == "forbidden":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Você não tem permissão para remover leads deste cartão."
+        )
+
+    return RedirectResponse(url=f"/cards/{card_code}/leads", status_code=302)

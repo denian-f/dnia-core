@@ -132,6 +132,28 @@
         </section>
         {% endif %}
 
+        <section class="bc-leads">
+            <span class="bc-leads-title">Deixe seu contato</span>
+
+            {% if lead_enviado %}
+            <p class="bc-leads-success">Contato enviado! Retornaremos em breve.</p>
+            {% else %}
+
+            {% if erro_lead %}
+            <p class="bc-leads-error">{{ erro_lead }}</p>
+            {% endif %}
+
+            <form class="bc-leads-form" method="post" action="/c/{{ card_code }}/leads">
+                <input type="text" name="name" placeholder="Seu nome" required>
+                <input type="email" name="email" placeholder="Seu e-mail">
+                <input type="text" name="phone" placeholder="Seu telefone">
+                <textarea name="message" rows="2" placeholder="Mensagem (opcional)"></textarea>
+                <button type="submit" class="bc-btn bc-btn-primary">Enviar contato</button>
+            </form>
+
+            {% endif %}
+        </section>
+
         <footer class="bc-footer">
             <span>DNA Connect</span>
         </footer>

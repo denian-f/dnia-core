@@ -44,3 +44,15 @@ class CardBusinessProfile:
     background_image: Optional[str]
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass
+class CardLead:
+
+    id: int
+    card_id: int
+    name: str
+    email: Optional[str]
+    phone: Optional[str]
+    message: Optional[str]
+    created_at: datetime

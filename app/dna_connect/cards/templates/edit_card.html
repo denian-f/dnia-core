@@ -70,6 +70,7 @@
                         <a href="{{ url_compartilhar_whatsapp }}" target="_blank" rel="noopener noreferrer" class="btn-view-card">Compartilhar no WhatsApp</a>
                         {% if cartao.mode == "business_card" and perfil %}
                         <a href="{{ url_pdf_cartao }}" download class="btn-view-card">Baixar PDF</a>
+                        <a href="/cards/{{ cartao.code }}/leads" class="btn-view-card">Ver leads</a>
                         {% endif %}
                     </div>
                     <p class="physical-card-hint">

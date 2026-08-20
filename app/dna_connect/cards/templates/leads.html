@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leads - {{ cartao.code }} - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/tokens.css">
+    <link rel="stylesheet" href="/dashboard/static/css/nav.css">
+    <link rel="stylesheet" href="/dashboard/static/css/dashboard.css">
+    <link rel="stylesheet" href="/cards/static/css/business_card_editor.css">
+</head>
+<body class="has-sidebar">
+
+    {% include "_nav.html" %}
+
+    <div class="app-shell-main">
+        <main class="app-content">
+
+        <nav class="breadcrumb">
+            <a href="/cards/{{ cartao.code }}/edit">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+                {{ cartao.code }}
+            </a>
+            <span>/</span>
+            <span>Leads</span>
+        </nav>
+
+        <section class="dashboard-header">
+            <div class="dashboard-welcome">
+                <h2>Leads recebidos</h2>
+                <p class="dashboard-email">{{ leads|length }} contato{{ "s" if leads|length != 1 else "" }} recebido{{ "s" if leads|length != 1 else "" }}</p>
+            </div>
+            {% if leads %}
+            <a href="/cards/{{ cartao.code }}/leads/export" class="btn-activate-card">Baixar CSV</a>
+            {% endif %}
+        </section>
+
+        <section class="dashboard-cards">
+            <h3 class="dashboard-cards-title">Contatos</h3>
+            <div class="table-scroll">
+                <table class="cards-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>E-mail</th>
+                            <th>Telefone</th>
+                            <th>Mensagem</th>
+                            <th>Data</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lead in leads %}
+                        <tr>
+                            <td>{{ lead.name }}</td>
+                            <td>{{ lead.email or "-" }}</td>
+                            <td>{{ lead.phone or "-" }}</td>
+                            <td class="cell-truncate" title="{{ lead.message or '' }}">{{ lead.message or "-" }}</td>
+                            <td>{{ lead.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <div class="table-actions">
+                                    <form class="remove-card-form" method="post" action="/cards/{{ cartao.code }}/leads/{{ lead.id }}/delete">
+                                        <button type="submit" class="btn-remove" onclick="return confirm('Remover este lead?')">Remover</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="cards-empty">Nenhum lead recebido ainda.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        </main>
+    </div>
+
+</body>
+</html>
