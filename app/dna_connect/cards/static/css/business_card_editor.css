@@ -400,6 +400,59 @@ body {
     background-color: var(--dc-brand-light);
 }
 
+.catalog-section {
+    background-color: #ffffff;
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 24px 0 0 0;
+}
+
+.catalog-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dc-navy);
+}
+
+.catalog-subtitle {
+    margin: 6px 0 20px 0;
+    font-size: 13px;
+    color: var(--dc-gray-500);
+    line-height: 1.5;
+}
+
+.catalog-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.catalog-item-row {
+    border: 1px solid var(--dc-gray-200);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.photo-preview-catalog {
+    border-radius: 10px;
+}
+
+.photo-preview-catalog .photo-preview-img,
+.photo-preview-catalog .photo-preview-placeholder {
+    border-radius: 10px;
+}
+
+.catalog-item-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.btn-catalog-remove {
+    margin-left: auto;
+}
+
 .remove-photo-form {
     margin: -12px 0 20px 0;
 }

@@ -74,6 +74,33 @@
         </section>
         {% endif %}
 
+        {% if catalogo %}
+        <section class="bc-catalog">
+            <span class="bc-catalog-title">Catálogo</span>
+            <div class="bc-catalog-list">
+                {% for item in catalogo %}
+                <div class="bc-catalog-item">
+                    {% if item.tem_imagem %}
+                    <img class="bc-catalog-item-img" src="/c/{{ card_code }}/catalog/{{ item.id }}/image" alt="{{ item.title }}">
+                    {% endif %}
+                    <div class="bc-catalog-item-body">
+                        <span class="bc-catalog-item-title">{{ item.title }}</span>
+                        {% if item.description %}
+                        <p class="bc-catalog-item-desc">{{ item.description }}</p>
+                        {% endif %}
+                        {% if item.price %}
+                        <span class="bc-catalog-item-price">{{ item.price }}</span>
+                        {% endif %}
+                        {% if item.action_url %}
+                        <a class="bc-catalog-item-btn" href="{{ item.action_url }}" target="_blank" rel="noopener noreferrer">{{ item.action_label or "Ver mais" }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
         {% if pix_key %}
         <section class="bc-pix">
             <span class="bc-pix-label">Chave Pix{% if pix_key_type %} &middot; {{ pix_key_type }}{% endif %}</span>

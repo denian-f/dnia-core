@@ -348,6 +348,66 @@
 
         </div>
 
+        <section class="catalog-section">
+
+            <h2 class="catalog-title">Catálogo de produtos/serviços</h2>
+            <p class="catalog-subtitle">Mostre seus produtos ou serviços na página pública, com foto, preço e um botão de ação.</p>
+
+            <form class="business-profile-form" method="post" action="/cards/{{ cartao.code }}/catalog" enctype="multipart/form-data" id="catalog-form">
+
+                <div class="catalog-items-list" id="catalog-items-list">
+                    {% for item in catalogo %}
+                    <div class="catalog-item-row">
+                        <input type="hidden" name="catalog_id[]" value="{{ item.id }}">
+
+                        <div class="photo-field">
+                            <div class="photo-preview photo-preview-catalog">
+                                {% if item.tem_imagem %}
+                                <img src="/c/{{ cartao.code }}/catalog/{{ item.id }}/image" alt="Foto do item" class="photo-preview-img">
+                                {% else %}
+                                <div class="photo-preview-placeholder">?</div>
+                                {% endif %}
+                            </div>
+                            <div class="photo-field-actions">
+                                <input type="file" name="catalog_image[]" accept="image/jpeg,image/png,image/webp">
+                                <span class="photo-field-hint">JPG, PNG ou WEBP, até 5&nbsp;MB.</span>
+                            </div>
+                        </div>
+
+                        <label>Título</label>
+                        <input type="text" name="catalog_title[]" value="{{ item.title }}" maxlength="60" placeholder="Nome do produto/serviço">
+
+                        <label>Descrição</label>
+                        <textarea name="catalog_description[]" rows="2">{{ item.description or '' }}</textarea>
+
+                        <label>Preço</label>
+                        <input type="text" name="catalog_price[]" value="{{ item.price or '' }}" placeholder="Ex: R$ 50,00">
+
+                        <label>Rótulo do botão</label>
+                        <input type="text" name="catalog_action_label[]" value="{{ item.action_label or '' }}" placeholder="Ex: Comprar, Saiba mais">
+
+                        <label>Link do botão</label>
+                        <input type="text" name="catalog_action_url[]" value="{{ item.action_url or '' }}" placeholder="https://...">
+
+                        <div class="catalog-item-actions">
+                            <button type="button" class="btn-link-move" data-dir="up" aria-label="Mover para cima">&uarr;</button>
+                            <button type="button" class="btn-link-move" data-dir="down" aria-label="Mover para baixo">&darr;</button>
+                            <button type="button" class="btn-remove-photo btn-catalog-remove">Remover item</button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <button type="button" class="btn-add-link" id="btn-add-catalog-item">+ Adicionar item</button>
+
+                <div class="edit-actions">
+                    <button type="submit" class="btn-save">Salvar catálogo</button>
+                </div>
+
+            </form>
+
+        </section>
+
         {% else %}
 
         <form class="edit-form" method="post" action="/cards/{{ cartao.code }}/edit">
@@ -530,6 +590,86 @@
 
                 linksList.addEventListener("input", atualizarPreview);
                 linksList.addEventListener("change", atualizarPreview);
+            }
+
+            var catalogList = document.getElementById("catalog-items-list");
+            var btnAddCatalogItem = document.getElementById("btn-add-catalog-item");
+
+            function criarLinhaCatalogo() {
+                var div = document.createElement("div");
+                div.className = "catalog-item-row";
+                div.innerHTML =
+                    "<input type=\"hidden\" name=\"catalog_id[]\" value=\"\">" +
+                    "<div class=\"photo-field\">" +
+                        "<div class=\"photo-preview photo-preview-catalog\">" +
+                            "<div class=\"photo-preview-placeholder\">?</div>" +
+                        "</div>" +
+                        "<div class=\"photo-field-actions\">" +
+                            "<input type=\"file\" name=\"catalog_image[]\" accept=\"image/jpeg,image/png,image/webp\">" +
+                            "<span class=\"photo-field-hint\">JPG, PNG ou WEBP, até 5&nbsp;MB.</span>" +
+                        "</div>" +
+                    "</div>" +
+                    "<label>Título</label>" +
+                    "<input type=\"text\" name=\"catalog_title[]\" maxlength=\"60\" placeholder=\"Nome do produto/serviço\">" +
+                    "<label>Descrição</label>" +
+                    "<textarea name=\"catalog_description[]\" rows=\"2\"></textarea>" +
+                    "<label>Preço</label>" +
+                    "<input type=\"text\" name=\"catalog_price[]\" placeholder=\"Ex: R$ 50,00\">" +
+                    "<label>Rótulo do botão</label>" +
+                    "<input type=\"text\" name=\"catalog_action_label[]\" placeholder=\"Ex: Comprar, Saiba mais\">" +
+                    "<label>Link do botão</label>" +
+                    "<input type=\"text\" name=\"catalog_action_url[]\" placeholder=\"https://...\">" +
+                    "<div class=\"catalog-item-actions\">" +
+                        "<button type=\"button\" class=\"btn-link-move\" data-dir=\"up\" aria-label=\"Mover para cima\">&uarr;</button>" +
+                        "<button type=\"button\" class=\"btn-link-move\" data-dir=\"down\" aria-label=\"Mover para baixo\">&darr;</button>" +
+                        "<button type=\"button\" class=\"btn-remove-photo btn-catalog-remove\">Remover item</button>" +
+                    "</div>";
+                return div;
+            }
+
+            if (btnAddCatalogItem) {
+                btnAddCatalogItem.addEventListener("click", function () {
+                    catalogList.appendChild(criarLinhaCatalogo());
+                });
+            }
+
+            if (catalogList) {
+
+                catalogList.addEventListener("click", function (evento) {
+
+                    var botao = evento.target.closest("button");
+                    if (!botao) return;
+
+                    var linha = botao.closest(".catalog-item-row");
+
+                    if (botao.classList.contains("btn-catalog-remove")) {
+
+                        linha.remove();
+
+                    } else if (botao.classList.contains("btn-link-move")) {
+
+                        if (botao.dataset.dir === "up" && linha.previousElementSibling) {
+                            catalogList.insertBefore(linha, linha.previousElementSibling);
+                        } else if (botao.dataset.dir === "down" && linha.nextElementSibling) {
+                            catalogList.insertBefore(linha.nextElementSibling, linha);
+                        }
+
+                    }
+                });
+
+                catalogList.addEventListener("change", function (evento) {
+
+                    if (evento.target.type !== "file") return;
+
+                    var arquivo = evento.target.files && evento.target.files[0];
+                    if (!arquivo) return;
+
+                    var linha = evento.target.closest(".catalog-item-row");
+                    var preview = linha.querySelector(".photo-preview-catalog");
+                    var url = URL.createObjectURL(arquivo);
+
+                    preview.innerHTML = "<img src=\"" + url + "\" alt=\"Foto do item\" class=\"photo-preview-img\">";
+                });
             }
 
             function atualizarLinksPreview() {

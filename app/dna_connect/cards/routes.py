@@ -30,6 +30,8 @@ from app.dna_connect.cards.service import (
     salvar_links_cartao_visita,
     gerar_qr_code_pix_cartao,
     obter_payload_pix_cartao,
+    salvar_catalogo_cartao_visita,
+    obter_imagem_item_catalogo,
     ativar_cartao,
     atualizar_link_cartao,
     listar_cartoes_por_owner,
@@ -466,6 +468,98 @@ def _validar_links(form):
     return links, erros
 
 
+_TAMANHO_MAXIMO_TITULO_CATALOGO = 60
+
+
+async def _validar_catalogo(form):
+    """
+    Extrai e valida os itens do catálogo de produtos/serviços (Sprint
+    6). Cada item chega como um conjunto de campos catalog_*[] no
+    mesmo índice — mesmo padrão de listas paralelas já usado pelos
+    links livres (_validar_links), com um campo a mais (imagem, por
+    item). Linhas sem título são ignoradas (permite "remover" uma
+    linha no navegador só limpando o título).
+
+    `id` (catalog_id[]) identifica um item já existente, para
+    salvar_catalogo_cartao_visita decidir entre atualizar ou criar —
+    ver a função para o motivo de não ser um "apagar tudo e recriar"
+    como a lista de links.
+    """
+
+    ids = form.getlist("catalog_id[]")
+    titulos = form.getlist("catalog_title[]")
+    descricoes = form.getlist("catalog_description[]")
+    precos = form.getlist("catalog_price[]")
+    rotulos_acao = form.getlist("catalog_action_label[]")
+    urls_acao = form.getlist("catalog_action_url[]")
+    arquivos_imagem = form.getlist("catalog_image[]")
+
+    itens = []
+    erros = []
+
+    for i in range(len(titulos)):
+
+        titulo = (titulos[i] or "").strip()
+
+        if not titulo:
+            continue
+
+        if len(titulo) > _TAMANHO_MAXIMO_TITULO_CATALOGO:
+            erros.append(f'O título "{titulo}" deve ter no máximo {_TAMANHO_MAXIMO_TITULO_CATALOGO} caracteres.')
+            continue
+
+        descricao = (descricoes[i].strip() if i < len(descricoes) and descricoes[i] else None) or None
+        preco = (precos[i].strip() if i < len(precos) and precos[i] else None) or None
+        rotulo_acao = (rotulos_acao[i].strip() if i < len(rotulos_acao) and rotulos_acao[i] else None) or None
+        url_acao = urls_acao[i].strip() if i < len(urls_acao) and urls_acao[i] else ""
+
+        if url_acao and not url_acao.startswith(("http://", "https://")):
+            url_acao = f"https://{url_acao}"
+
+        if url_acao and not _valor_sem_esquema_perigoso(url_acao):
+            erros.append(f'O link do item "{titulo}" contém um endereço não permitido.')
+            continue
+
+        item_id_str = (ids[i] if i < len(ids) else "").strip()
+        item_id = int(item_id_str) if item_id_str.isdigit() else None
+
+        imagem_bytes = None
+        imagem_content_type = None
+
+        arquivo = arquivos_imagem[i] if i < len(arquivos_imagem) else None
+
+        if isinstance(arquivo, UploadFile) and arquivo.filename:
+
+            conteudo = await arquivo.read()
+            imagem_content_type, erro_imagem = _validar_foto(conteudo)
+
+            if erro_imagem:
+                erros.append(f'Imagem do item "{titulo}": {erro_imagem}')
+                continue
+
+            imagem_bytes = conteudo
+
+        itens.append({
+            "id": item_id,
+            "title": titulo,
+            "description": descricao,
+            "price": preco,
+            "action_label": rotulo_acao,
+            "action_url": url_acao or None,
+            "imagem_bytes": imagem_bytes,
+            "imagem_content_type": imagem_content_type,
+            # Usado só para repopular a prévia na re-renderização em
+            # caso de erro (ver _renderizar_pagina_edicao) — a imagem
+            # de um item existente que não recebeu arquivo novo neste
+            # envio simplesmente não aparece até o formulário ser
+            # salvo com sucesso, para não complicar essa validação
+            # buscando o estado atual no banco.
+            "tem_imagem": imagem_bytes is not None
+        })
+
+    return itens, erros
+
+
 class ActivateRequest(BaseModel):
 
     card_code: str
@@ -612,6 +706,7 @@ def card_business_profile(card_code: str, request: Request):
             "telefone_link": _link_telefone(perfil.phone),
             "email_link": _link_email(perfil.email),
             "links": resultado["links"],
+            "catalogo": resultado["catalogo"],
             "website_link": _link_website(perfil.website),
             "google_maps_link": _url_segura(perfil.google_maps_url),
             "pix_key": perfil.pix_key,
@@ -657,6 +752,24 @@ def card_business_background_image(card_code: str):
 
     if not imagem:
         raise HTTPException(status_code=404, detail="Imagem de fundo não encontrada.")
+
+    return Response(content=imagem["dados"], media_type=imagem["content_type"])
+
+
+@router.get("/c/{card_code}/catalog/{item_id}/image")
+def card_catalog_item_image(card_code: str, item_id: int):
+    """
+    Serve os bytes da foto de um item do catálogo (Sprint 6). Rota
+    pública, sem autenticação — mesmo nível de exposição das demais
+    imagens do perfil (foto, fundo). O card_code na URL é só para
+    manter o padrão de rota já usado pelas outras imagens; quem
+    resolve a imagem é o item_id.
+    """
+
+    imagem = obter_imagem_item_catalogo(item_id)
+
+    if not imagem:
+        raise HTTPException(status_code=404, detail="Imagem não encontrada.")
 
     return Response(content=imagem["dados"], media_type=imagem["content_type"])
 
@@ -1067,6 +1180,7 @@ def _renderizar_pagina_edicao(
     sucesso=None,
     dados_pendentes=None,
     links_pendentes=None,
+    catalogo_pendente=None,
     status_code=200
 ):
     """
@@ -1092,6 +1206,7 @@ def _renderizar_pagina_edicao(
     perfil_real = resultado["profile"]
     perfil = dados_pendentes if dados_pendentes is not None else perfil_real
     links = links_pendentes if links_pendentes is not None else resultado["links"]
+    catalogo = catalogo_pendente if catalogo_pendente is not None else resultado["catalogo"]
     # foto_atual/fundo_imagem_atual refletem sempre o que está de fato
     # salvo no banco, nunca o dict de dados pendentes (que não inclui
     # essas imagens — ver save_business_profile)
@@ -1106,6 +1221,7 @@ def _renderizar_pagina_edicao(
             "cartao": cartao,
             "perfil": perfil,
             "links": links,
+            "catalogo": catalogo,
             "foto_atual": foto_atual,
             "fundo_imagem_atual": fundo_imagem_atual,
             "url_cartao_fisico": url_cartao_fisico,
@@ -1327,6 +1443,52 @@ async def save_business_profile(
     salvar_links_cartao_visita(card_code, owner_id=current_user.id, links=links)
 
     definir_modo_cartao(card_code, owner_id=current_user.id, mode="business_card")
+
+    return RedirectResponse(url=f"/cards/{card_code}/edit", status_code=302)
+
+
+@router.post("/cards/{card_code}/catalog")
+async def save_catalog(
+    card_code: str,
+    request: Request,
+    current_user=Depends(get_optional_user)
+):
+    """
+    Salva o catálogo de produtos/serviços do cartão (Sprint 6). Rota
+    própria, separada de save_business_profile: cada item pode ter sua
+    própria foto, e misturar isso no formulário principal do perfil
+    complicaria a lógica de "manter foto atual se nenhum arquivo novo
+    for enviado" sem ganho nenhum (ver salvar_catalogo_cartao_visita).
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    form = await request.form()
+    itens, erros = await _validar_catalogo(form)
+
+    if erros:
+
+        return _renderizar_pagina_edicao(
+            request,
+            card_code,
+            current_user,
+            erro=" ".join(erros),
+            catalogo_pendente=itens,
+            status_code=400
+        )
+
+    resultado = salvar_catalogo_cartao_visita(card_code, owner_id=current_user.id, itens=itens)
+
+    if resultado["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Cartão não encontrado.")
+
+    if resultado["status"] == "forbidden":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Você não tem permissão para editar este cartão."
+        )
 
     return RedirectResponse(url=f"/cards/{card_code}/edit", status_code=302)
 

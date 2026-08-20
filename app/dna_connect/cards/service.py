@@ -12,6 +12,7 @@ from qrcode.constants import ERROR_CORRECT_M
 from app.dna_connect.cards.repository import CardRepository
 from app.dna_connect.cards.business_profile_repository import CardBusinessProfileRepository
 from app.dna_connect.cards.card_links_repository import CardLinksRepository
+from app.dna_connect.cards.card_catalog_repository import CardCatalogRepository
 from app.dna_connect.users.service import buscar_usuario_por_email
 from app.dna_connect.email import config as email_config
 
@@ -85,6 +86,16 @@ def init_cards_db():
     finally:
 
         links_repo.fechar()
+
+    catalog_repo = CardCatalogRepository()
+
+    try:
+
+        catalog_repo.criar_tabela()
+
+    finally:
+
+        catalog_repo.fechar()
 
 
 def resolver_cartao_publico(code: str):
@@ -400,6 +411,132 @@ def salvar_links_cartao_visita(card_code: str, owner_id: int, links: list):
     return {"status": "saved", "card_code": card_code}
 
 
+def listar_catalogo_cartao_visita(card_id: int):
+    """
+    Lista os itens do catálogo de produtos/serviços do cartão, na
+    ordem configurada pelo dono.
+    """
+
+    catalog_repo = CardCatalogRepository()
+
+    try:
+
+        return catalog_repo.listar_por_card_id(card_id)
+
+    finally:
+
+        catalog_repo.fechar()
+
+
+def salvar_catalogo_cartao_visita(card_code: str, owner_id: int, itens: list):
+    """
+    Sincroniza o catálogo de produtos/serviços com a lista enviada pelo
+    formulário. Cada item de `itens` é um dict com: id (int do item já
+    existente, ou None se for novo), title, description, price,
+    action_label, action_url, imagem_bytes (bytes de um novo arquivo
+    enviado, ou None) e imagem_content_type.
+
+    Diferente da lista de links (Sprint 4), aqui os itens têm ID
+    estável e são atualizados individualmente em vez de "apagar tudo e
+    recriar": como cada item pode ter sua própria foto, um
+    apagar-e-recriar exigiria reenviar a imagem de todo item a cada
+    salvamento, mesmo dos que não mudaram. Atualizar por ID preserva a
+    foto de qualquer item que não recebeu um arquivo novo neste envio.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+        if not card:
+            return {"status": "not_found"}
+
+        if card.owner_id != owner_id:
+            return {"status": "forbidden"}
+
+    finally:
+
+        repo.fechar()
+
+    catalog_repo = CardCatalogRepository()
+
+    try:
+
+        ids_existentes = catalog_repo.buscar_ids_por_card_id(card.id)
+        ids_mantidos = set()
+
+        for posicao, item in enumerate(itens):
+
+            dados_item = {
+                "title": item["title"],
+                "description": item.get("description"),
+                "price": item.get("price"),
+                "action_label": item.get("action_label"),
+                "action_url": item.get("action_url")
+            }
+
+            item_id = item.get("id")
+
+            if item_id and item_id in ids_existentes:
+
+                catalog_repo.atualizar_item(
+                    item_id,
+                    dados_item,
+                    posicao,
+                    imagem_bytes=item.get("imagem_bytes"),
+                    imagem_content_type=item.get("imagem_content_type")
+                )
+
+                ids_mantidos.add(item_id)
+
+            else:
+
+                novo_id = catalog_repo.criar_item(
+                    card.id,
+                    dados_item,
+                    posicao,
+                    imagem_bytes=item.get("imagem_bytes"),
+                    imagem_content_type=item.get("imagem_content_type")
+                )
+
+                ids_mantidos.add(novo_id)
+
+        for id_removido in ids_existentes - ids_mantidos:
+            catalog_repo.remover_item(id_removido)
+
+    finally:
+
+        catalog_repo.fechar()
+
+    return {"status": "saved", "card_code": card_code}
+
+
+def obter_imagem_item_catalogo(item_id: int):
+    """
+    Retorna os bytes/content-type da foto de um item do catálogo, para
+    a rota pública que serve a imagem. Não faz verificação de dono —
+    mesmo nível de exposição de obter_foto_cartao_visita (dado já
+    público na própria página do cartão).
+    """
+
+    catalog_repo = CardCatalogRepository()
+
+    try:
+
+        return catalog_repo.buscar_imagem_por_item_id(item_id)
+
+    finally:
+
+        catalog_repo.fechar()
+
+
+def construir_url_imagem_item_catalogo(card_code: str, item_id: int) -> str:
+
+    return f"/c/{card_code}/catalog/{item_id}/image"
+
+
 def construir_url_foto_cartao(card_code: str) -> str:
     """
     Caminho interno (relativo, sem domínio) que serve a foto de perfil
@@ -676,8 +813,9 @@ def obter_perfil_cartao_visita_editor(card_code: str, owner_id: int):
         perfil_repo.fechar()
 
     links = listar_links_cartao_visita(card.id)
+    catalogo = listar_catalogo_cartao_visita(card.id)
 
-    return {"status": "ok", "card": card, "profile": perfil, "links": links}
+    return {"status": "ok", "card": card, "profile": perfil, "links": links, "catalogo": catalogo}
 
 
 def resolver_cartao_visita(card_code: str):
@@ -714,8 +852,9 @@ def resolver_cartao_visita(card_code: str):
         perfil_repo.fechar()
 
     links = listar_links_cartao_visita(card.id)
+    catalogo = listar_catalogo_cartao_visita(card.id)
 
-    return {"status": "ok", "card_code": card.code, "profile": perfil, "links": links}
+    return {"status": "ok", "card_code": card.code, "profile": perfil, "links": links, "catalogo": catalogo}
 
 
 _QR_RESOLUCAO_MINIMA_PX = 1000
