@@ -262,6 +262,34 @@ _CAMPOS_URL_OU_HANDLE = (
 )
 
 
+_PALAVRAS_CHAVE_TELEFONE_PIX = ("telefone", "fone", "celular", "phone", "whatsapp")
+
+
+def _normalizar_chave_pix_telefone(chave: str) -> str:
+    """
+    Chave Pix do tipo telefone precisa estar no formato internacional
+    completo (+55DDDNUMERO, ex: +5548991983553) para os bancos
+    reconhecerem — é esse "+55" que diferencia telefone dos outros
+    tipos de chave no cadastro do Banco Central (DICT). Sem ele, o
+    banco não localiza a chave, mesmo ela estando correta — CPF,
+    CNPJ, e-mail e chave aleatória não têm esse problema, por isso
+    funcionavam normalmente sem nenhuma formatação.
+    """
+
+    digitos = re.sub(r"\D", "", chave)
+
+    if not digitos:
+        return chave
+
+    if digitos.startswith("55") and len(digitos) in (12, 13):
+        return f"+{digitos}"
+
+    if len(digitos) in (10, 11):
+        return f"+55{digitos}"
+
+    return chave
+
+
 _FORMATOS_FOTO_PERMITIDOS = {
     "JPEG": "image/jpeg",
     "PNG": "image/png",
@@ -331,6 +359,11 @@ def _validar_dados_perfil(form):
 
     dados = {campo: _campo_opcional(form, campo) for campo in CAMPOS_PERFIL}
     erros = []
+
+    if dados["pix_key"] and dados["pix_key_type"] and any(
+        palavra in dados["pix_key_type"].strip().lower() for palavra in _PALAVRAS_CHAVE_TELEFONE_PIX
+    ):
+        dados["pix_key"] = _normalizar_chave_pix_telefone(dados["pix_key"])
 
     if dados["email"] and not _EMAIL_SIMPLES.fullmatch(dados["email"]):
         erros.append("E-mail em formato inválido.")

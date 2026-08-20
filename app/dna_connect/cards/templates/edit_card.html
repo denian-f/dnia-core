@@ -200,6 +200,7 @@
 
                     <label for="f-pix_key">Chave Pix</label>
                     <input type="text" id="f-pix_key" name="pix_key" value="{{ perfil.pix_key or '' }}">
+                    <span class="field-hint">Se a chave for telefone, pode digitar só o DDD + número — o "+55" é adicionado automaticamente ao salvar.</span>
 
                     <label for="f-pix_key_type">Tipo da chave Pix</label>
                     <input type="text" id="f-pix_key_type" name="pix_key_type" value="{{ perfil.pix_key_type or '' }}" placeholder="CPF, e-mail, telefone, aleatória...">
