@@ -7,7 +7,7 @@ load_dotenv()
 
 BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 EMAIL_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "DNA Connect")
-EMAIL_FROM_ADDRESS = os.getenv("EMAIL_FROM_ADDRESS", "contato@denianfernandes.com")
+EMAIL_FROM_ADDRESS = os.getenv("EMAIL_FROM_ADDRESS", "contato@dnaoficial.com")
 APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip("/")
 
 # Domínio usado só para o link público do cartão (QR Code/NFC/cartão de
