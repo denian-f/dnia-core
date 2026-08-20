@@ -648,16 +648,41 @@ _QR_RESOLUCAO_MINIMA_PX = 1000
 _QR_BORDA_MODULOS = 4  # quiet zone mínima recomendada pela especificação QR
 
 
-def gerar_qr_code_cartao(card_code: str):
+def _renderizar_qr_code(conteudo: str) -> bytes:
     """
-    Gera a imagem PNG (em memória, nunca persistida em disco) do QR Code
-    que aponta para a URL pública permanente do cartão. Retorna None
-    caso o cartão não exista.
+    Renderiza qualquer texto como imagem PNG de QR Code (em memória,
+    nunca persistida em disco). Extraído de gerar_qr_code_cartao para
+    ser reaproveitado também pelo QR Code offline (vCard) — a lógica de
+    renderização é a mesma, só muda o que é codificado.
 
     Resolução calculada dinamicamente (>= 1000x1000px) para ficar
     adequada à impressão física do cartão (Sprint 29) — mesma técnica
-    já usada no utilitário de QR de embalagem da Sprint 24. O conteúdo
-    codificado (a URL) não muda.
+    já usada no utilitário de QR de embalagem da Sprint 24.
+    """
+
+    qr = qrcode.QRCode(
+        error_correction=ERROR_CORRECT_M,
+        box_size=10,
+        border=_QR_BORDA_MODULOS,
+    )
+    qr.add_data(conteudo)
+    qr.make(fit=True)
+
+    modulos_totais = len(qr.get_matrix())  # já inclui a quiet zone
+    qr.box_size = -(-_QR_RESOLUCAO_MINIMA_PX // modulos_totais)  # ceil division
+
+    imagem = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+
+    buffer = io.BytesIO()
+    imagem.save(buffer, format="PNG")
+
+    return buffer.getvalue()
+
+
+def gerar_qr_code_cartao(card_code: str):
+    """
+    Gera a imagem PNG do QR Code que aponta para a URL pública
+    permanente do cartão. Retorna None caso o cartão não exista.
     """
 
     repo = CardRepository()
@@ -675,20 +700,129 @@ def gerar_qr_code_cartao(card_code: str):
 
     url = construir_url_publica_cartao(card.code)
 
-    qr = qrcode.QRCode(
-        error_correction=ERROR_CORRECT_M,
-        box_size=10,
-        border=_QR_BORDA_MODULOS,
+    return _renderizar_qr_code(url)
+
+
+def _escapar_valor_vcard(valor: str) -> str:
+    """
+    Escapa caracteres especiais reservados pelo formato vCard (RFC
+    6350), evitando um arquivo malformado caso nome/empresa/cargo
+    contenham vírgula, ponto e vírgula ou barra invertida.
+    """
+
+    return (
+        valor.replace("\\", "\\\\")
+        .replace(";", "\\;")
+        .replace(",", "\\,")
+        .replace("\r\n", "\\n")
+        .replace("\n", "\\n")
     )
-    qr.add_data(url)
-    qr.make(fit=True)
 
-    modulos_totais = len(qr.get_matrix())  # já inclui a quiet zone
-    qr.box_size = -(-_QR_RESOLUCAO_MINIMA_PX // modulos_totais)  # ceil division
 
-    imagem = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+def construir_vcard_cartao_visita(perfil) -> str:
+    """
+    Monta um vCard 3.0 (padrão universal reconhecido nativamente por
+    qualquer celular, sem precisar de app nem internet para ler) a
+    partir do perfil do cartão de visita. Fonte compartilhada tanto
+    pelo botão "Salvar contato" (download .vcf) quanto pelo QR Code
+    offline — só muda o destino do mesmo conteúdo.
 
-    buffer = io.BytesIO()
-    imagem.save(buffer, format="PNG")
+    Mantém apenas os campos de identidade/contato "de cartão físico"
+    (nome, cargo, empresa, telefone, e-mail, site). Bio, redes sociais
+    e Pix ficam de fora de propósito: são dados da página pública
+    completa, não fazem parte de um cartão de visita tradicional, e
+    deixariam o QR Code denso demais para escanear de forma confiável.
+    """
 
-    return buffer.getvalue()
+    nome = _escapar_valor_vcard((perfil.name or "").strip()) or "Sem nome"
+
+    linhas = [
+        "BEGIN:VCARD",
+        "VERSION:3.0",
+        f"N:{nome};;;;",
+        f"FN:{nome}"
+    ]
+
+    if perfil.company:
+        linhas.append(f"ORG:{_escapar_valor_vcard(perfil.company.strip())}")
+
+    if perfil.professional_title:
+        linhas.append(f"TITLE:{_escapar_valor_vcard(perfil.professional_title.strip())}")
+
+    telefone = perfil.whatsapp or perfil.phone
+
+    if telefone:
+        linhas.append(f"TEL;TYPE=CELL:{_escapar_valor_vcard(telefone.strip())}")
+
+    if perfil.email:
+        linhas.append(f"EMAIL:{_escapar_valor_vcard(perfil.email.strip())}")
+
+    if perfil.website:
+
+        site = perfil.website.strip()
+
+        if not site.startswith(("http://", "https://")):
+            site = f"https://{site}"
+
+        linhas.append(f"URL:{_escapar_valor_vcard(site)}")
+
+    linhas.append("END:VCARD")
+
+    return "\r\n".join(linhas) + "\r\n"
+
+
+def obter_vcard_cartao_visita(card_code: str):
+    """
+    Retorna o vCard do cartão de visita público (rota GET
+    /c/{card_code}/vcard), ou None caso o cartão não exista, não esteja
+    em modo business_card, ou ainda não tenha perfil preenchido — mesmo
+    padrão de resolver_cartao_visita, sem exigir autenticação (é dado
+    já público na própria página do cartão).
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+    finally:
+
+        repo.fechar()
+
+    if not card or card.mode != "business_card":
+        return None
+
+    perfil_repo = CardBusinessProfileRepository()
+
+    try:
+
+        perfil = perfil_repo.buscar_por_card_id(card.id)
+
+    finally:
+
+        perfil_repo.fechar()
+
+    if not perfil:
+        return None
+
+    return construir_vcard_cartao_visita(perfil)
+
+
+def gerar_qr_code_offline_cartao(card_code: str):
+    """
+    QR Code "offline": em vez de apontar para a página pública do
+    cartão, o próprio conteúdo do QR é o vCard — o celular reconhece o
+    formato e oferece salvar direto nos contatos, sem precisar de
+    internet no momento do scan (diferente do QR "online", que exige
+    carregar a página). Retorna None nos mesmos casos de
+    obter_vcard_cartao_visita (cartão inexistente, modo custom_link, ou
+    sem perfil preenchido — não há dados para montar um vCard).
+    """
+
+    vcard = obter_vcard_cartao_visita(card_code)
+
+    if not vcard:
+        return None
+
+    return _renderizar_qr_code(vcard)

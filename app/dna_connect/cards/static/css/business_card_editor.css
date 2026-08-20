@@ -138,6 +138,12 @@ body {
     line-height: 1.5;
 }
 
+.physical-card-qr-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 .physical-card-qr {
     display: flex;
     flex-direction: column;

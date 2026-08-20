@@ -28,7 +28,6 @@
         </section>
         {% endif %}
 
-        {% if whatsapp_link or telefone_link or email_link or google_maps_link %}
         <section class="bc-contacts">
             {% if whatsapp_link %}
             <a class="bc-btn bc-btn-primary" href="{{ whatsapp_link }}" target="_blank" rel="noopener noreferrer">Chamar no WhatsApp</a>
@@ -42,8 +41,8 @@
             {% if google_maps_link %}
             <a class="bc-btn" href="{{ google_maps_link }}" target="_blank" rel="noopener noreferrer">Ver localização</a>
             {% endif %}
+            <a class="bc-btn" href="/c/{{ card_code }}/vcard">Salvar contato</a>
         </section>
-        {% endif %}
 
         {% if instagram_link or linkedin_link or facebook_link or tiktok_link or youtube_link or website_link %}
         <section class="bc-social">

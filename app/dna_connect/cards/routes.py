@@ -23,6 +23,8 @@ from app.dna_connect.cards.service import (
     definir_modo_cartao,
     construir_url_publica_cartao,
     gerar_qr_code_cartao,
+    obter_vcard_cartao_visita,
+    gerar_qr_code_offline_cartao,
     ativar_cartao,
     atualizar_link_cartao,
     listar_cartoes_por_owner,
@@ -496,6 +498,7 @@ def card_business_profile(card_code: str, request: Request):
         request=request,
         name="business_card.html",
         context={
+            "card_code": card_code,
             "nome": perfil.name,
             "cargo": perfil.professional_title,
             "empresa": perfil.company,
@@ -553,6 +556,31 @@ def card_business_background_image(card_code: str):
         raise HTTPException(status_code=404, detail="Imagem de fundo não encontrada.")
 
     return Response(content=imagem["dados"], media_type=imagem["content_type"])
+
+
+@router.get("/c/{card_code}/vcard")
+def card_business_vcard(card_code: str):
+    """
+    Serve o vCard do cartão de visita para download ("Salvar contato"
+    na página pública) — mesma fonte de dados usada pelo QR Code
+    offline. Rota pública, sem autenticação: é o mesmo nível de
+    exposição do restante do perfil na página pública. 404 se o cartão
+    não existir, não estiver em modo business_card, ou não tiver perfil
+    preenchido ainda.
+    """
+
+    vcard = obter_vcard_cartao_visita(card_code)
+
+    if not vcard:
+        raise HTTPException(status_code=404, detail="Cartão de visita não encontrado.")
+
+    return Response(
+        content=vcard,
+        media_type="text/vcard",
+        headers={
+            "Content-Disposition": f'attachment; filename="{card_code}.vcf"'
+        }
+    )
 
 
 @router.post("/activate")
@@ -805,6 +833,51 @@ def card_qr_owner(
     )
 
 
+@router.get("/cards/{card_code}/qr-offline")
+def card_qr_offline_owner(
+    card_code: str,
+    current_user=Depends(get_optional_user)
+):
+    """
+    QR Code offline (vCard) do cartão, para o próprio proprietário —
+    mesma autorização de card_qr_owner, só que o conteúdo codificado é
+    um vCard em vez do link público. Só existe para cartões em modo
+    business_card com perfil preenchido (ver gerar_qr_code_offline_cartao).
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    resultado = obter_cartao(card_code=card_code, owner_id=current_user.id)
+
+    if resultado["status"] == "not_found":
+        raise HTTPException(status_code=404, detail="Cartão não encontrado.")
+
+    if resultado["status"] == "forbidden":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Você não tem permissão para acessar este cartão."
+        )
+
+    imagem_png = gerar_qr_code_offline_cartao(card_code)
+
+    if imagem_png is None:
+
+        raise HTTPException(
+            status_code=404,
+            detail="QR Code offline disponível apenas para cartões em modo Cartão de visita, com o perfil preenchido."
+        )
+
+    return Response(
+        content=imagem_png,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'attachment; filename="dna-connect-{card_code}-qr-offline.png"'
+        }
+    )
+
+
 def _renderizar_pagina_edicao(
     request: Request,
     card_code: str,
@@ -852,6 +925,7 @@ def _renderizar_pagina_edicao(
             "fundo_imagem_atual": fundo_imagem_atual,
             "url_cartao_fisico": construir_url_publica_cartao(cartao.code),
             "url_qr_cartao": f"/cards/{cartao.code}/qr",
+            "url_qr_offline_cartao": f"/cards/{cartao.code}/qr-offline",
             "erro": erro,
             "sucesso": sucesso
         },

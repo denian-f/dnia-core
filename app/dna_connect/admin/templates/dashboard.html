@@ -83,6 +83,7 @@
                             <td>
                                 <div class="table-actions">
                                     <a class="btn-edit" href="/admin/cards/{{ cartao.code }}/qr">QR Code</a>
+                                    <a class="btn-edit" href="/admin/cards/{{ cartao.code }}/qr-offline">QR Offline</a>
                                     <form class="remove-card-form" method="post" action="/admin/cards/{{ cartao.code }}/delete">
                                         <button type="submit" class="btn-remove" onclick="return confirm('Tem certeza que deseja excluir o cartão {{ cartao.code }}?\n\nEssa ação não poderá ser desfeita.')">Excluir</button>
                                     </form>

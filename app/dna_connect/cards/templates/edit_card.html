@@ -72,10 +72,25 @@
                     </p>
                 </div>
 
-                <div class="physical-card-qr">
-                    <span class="physical-card-label">QR Code</span>
-                    <img src="{{ url_qr_cartao }}" alt="QR Code do cartão {{ cartao.code }}" class="physical-card-qr-img">
-                    <a href="{{ url_qr_cartao }}" download class="btn-view-card">Baixar QR Code</a>
+                <div class="physical-card-qr-group">
+
+                    <div class="physical-card-qr">
+                        <span class="physical-card-label">QR Code</span>
+                        <img src="{{ url_qr_cartao }}" alt="QR Code do cartão {{ cartao.code }}" class="physical-card-qr-img">
+                        <a href="{{ url_qr_cartao }}" download class="btn-view-card">Baixar QR Code</a>
+                    </div>
+
+                    {% if cartao.mode == "business_card" and perfil %}
+                    <div class="physical-card-qr">
+                        <span class="physical-card-label">QR Code Offline</span>
+                        <img src="{{ url_qr_offline_cartao }}" alt="QR Code offline do cartão {{ cartao.code }}" class="physical-card-qr-img">
+                        <a href="{{ url_qr_offline_cartao }}" download class="btn-view-card">Baixar QR Offline</a>
+                        <p class="physical-card-hint">
+                            Funciona sem internet: ao escanear, o celular salva o contato direto na agenda.
+                        </p>
+                    </div>
+                    {% endif %}
+
                 </div>
 
             </div>

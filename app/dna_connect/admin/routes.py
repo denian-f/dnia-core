@@ -11,7 +11,7 @@ from app.dna_connect.admin.service import (
     gerar_cartao_automatico_admin,
     excluir_cartao_admin
 )
-from app.dna_connect.cards.service import gerar_qr_code_cartao
+from app.dna_connect.cards.service import gerar_qr_code_cartao, gerar_qr_code_offline_cartao
 
 router = APIRouter()
 
@@ -198,5 +198,39 @@ def admin_card_qr(
         media_type="image/png",
         headers={
             "Content-Disposition": f'attachment; filename="dna-connect-{card_code}-qr.png"'
+        }
+    )
+
+
+@router.get("/admin/cards/{card_code}/qr-offline")
+def admin_card_qr_offline(
+    card_code: str,
+    current_user=Depends(get_current_admin_web)
+):
+    """
+    QR Code offline (vCard) do cartão — mesma dependência
+    administrativa de admin_card_qr, só que o conteúdo codificado é um
+    vCard em vez do link público. 404 tanto para cartão inexistente
+    quanto para cartão sem perfil de cartão de visita preenchido (ver
+    gerar_qr_code_offline_cartao).
+    """
+
+    if not current_user:
+        return RedirectResponse(url="/login/view", status_code=302)
+
+    imagem_png = gerar_qr_code_offline_cartao(card_code)
+
+    if imagem_png is None:
+
+        raise HTTPException(
+            status_code=404,
+            detail="QR Code offline disponível apenas para cartões em modo Cartão de visita, com o perfil preenchido."
+        )
+
+    return Response(
+        content=imagem_png,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'attachment; filename="dna-connect-{card_code}-qr-offline.png"'
         }
     )
