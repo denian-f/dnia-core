@@ -3,10 +3,13 @@ import secrets
 import string
 
 import qrcode
+from fpdf import FPDF
+from PIL import Image
 from qrcode.constants import ERROR_CORRECT_M
 
 from app.dna_connect.cards.repository import CardRepository
 from app.dna_connect.cards.business_profile_repository import CardBusinessProfileRepository
+from app.dna_connect.cards.card_links_repository import CardLinksRepository
 from app.dna_connect.users.service import buscar_usuario_por_email
 from app.dna_connect.email import config as email_config
 
@@ -68,6 +71,17 @@ def init_cards_db():
     finally:
 
         perfil_repo.fechar()
+
+    links_repo = CardLinksRepository()
+
+    try:
+
+        links_repo.criar_tabela()
+        links_repo.migrar_redes_legadas()
+
+    finally:
+
+        links_repo.fechar()
 
 
 def resolver_cartao_publico(code: str):
@@ -326,6 +340,59 @@ def salvar_perfil_cartao_visita(card_code: str, owner_id: int, dados: dict):
     finally:
 
         perfil_repo.fechar()
+
+    return {"status": "saved", "card_code": card_code}
+
+
+def listar_links_cartao_visita(card_id: int):
+    """
+    Lista os links livres do cartão (Sprint 4 do roadmap Airgo, no
+    lugar dos antigos campos fixos de rede social), na ordem
+    configurada pelo dono.
+    """
+
+    links_repo = CardLinksRepository()
+
+    try:
+
+        return links_repo.listar_por_card_id(card_id)
+
+    finally:
+
+        links_repo.fechar()
+
+
+def salvar_links_cartao_visita(card_code: str, owner_id: int, links: list):
+    """
+    Substitui a lista de links livres do cartão. Reaproveita a mesma
+    checagem de posse de salvar_perfil_cartao_visita.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+        if not card:
+            return {"status": "not_found"}
+
+        if card.owner_id != owner_id:
+            return {"status": "forbidden"}
+
+    finally:
+
+        repo.fechar()
+
+    links_repo = CardLinksRepository()
+
+    try:
+
+        links_repo.substituir_links(card_id=card.id, links=links)
+
+    finally:
+
+        links_repo.fechar()
 
     return {"status": "saved", "card_code": card_code}
 
@@ -605,7 +672,9 @@ def obter_perfil_cartao_visita_editor(card_code: str, owner_id: int):
 
         perfil_repo.fechar()
 
-    return {"status": "ok", "card": card, "profile": perfil}
+    links = listar_links_cartao_visita(card.id)
+
+    return {"status": "ok", "card": card, "profile": perfil, "links": links}
 
 
 def resolver_cartao_visita(card_code: str):
@@ -641,7 +710,9 @@ def resolver_cartao_visita(card_code: str):
 
         perfil_repo.fechar()
 
-    return {"status": "ok", "card_code": card.code, "profile": perfil}
+    links = listar_links_cartao_visita(card.id)
+
+    return {"status": "ok", "card_code": card.code, "profile": perfil, "links": links}
 
 
 _QR_RESOLUCAO_MINIMA_PX = 1000
@@ -826,3 +897,221 @@ def gerar_qr_code_offline_cartao(card_code: str):
         return None
 
     return _renderizar_qr_code(vcard)
+
+
+_PDF_COR_MARCA = (8, 94, 254)      # --dc-brand
+_PDF_COR_NAVY = (11, 31, 74)       # --dc-navy
+_PDF_COR_CINZA = (107, 114, 128)   # --dc-gray-500
+_PDF_COR_CINZA_CLARO = (229, 232, 239)  # --dc-gray-200
+
+def _imagem_para_pdf(dados_binarios: bytes):
+    """
+    Normaliza qualquer imagem suportada pelo upload (JPG/PNG/WEBP) para
+    PNG em memória — fpdf2 lida de forma mais previsível com PNG/JPEG
+    do que com WEBP, então convertemos aqui em vez de arriscar
+    incompatibilidade silenciosa na geração do PDF.
+    """
+
+    imagem = Image.open(io.BytesIO(dados_binarios)).convert("RGB")
+    buffer = io.BytesIO()
+    imagem.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    return buffer
+
+
+def _montar_pdf_cartao_visita(perfil, url_publica: str, qr_bytes: bytes, foto_bytes, links: list) -> bytes:
+    """
+    Monta o PDF do cartão de visita digital, como um documento de uma
+    página (A4) — pra baixar e anexar em e-mail/WhatsApp, diferente do
+    QR Code/vCard (pensados para escaneamento). Layout desenhado
+    programaticamente com fpdf2 (sem dependência nativa do sistema
+    operacional, ao contrário do WeasyPrint já usado em outro módulo do
+    projeto — evita o mesmo problema de ambiente), não é uma conversão
+    do HTML da página pública.
+    """
+
+    pdf = FPDF(orientation="P", unit="mm", format="A4")
+    # As fontes padrão (Helvetica) não convertem a codificação sozinhas
+    # — sem isso, acentos (ã, õ, ç...) viram caracteres inválidos no
+    # PDF gerado. cp1252 cobre todos os caracteres usados em português.
+    pdf.core_fonts_encoding = "cp1252"
+    pdf.set_auto_page_break(auto=True, margin=20)
+    pdf.add_page()
+
+    largura_pagina = pdf.w
+    margem = pdf.l_margin
+    largura_util = largura_pagina - 2 * margem
+
+    # Barra de marca no topo
+    pdf.set_fill_color(*_PDF_COR_MARCA)
+    pdf.rect(0, 0, largura_pagina, 6, style="F")
+
+    pdf.set_xy(margem, 16)
+
+    largura_foto = 32
+
+    if foto_bytes:
+
+        pdf.image(_imagem_para_pdf(foto_bytes), x=margem, y=16, w=largura_foto, h=largura_foto)
+        x_texto = margem + largura_foto + 8
+
+    else:
+
+        x_texto = margem
+
+    largura_texto = largura_pagina - margem - x_texto
+
+    pdf.set_xy(x_texto, 18)
+    pdf.set_text_color(*_PDF_COR_NAVY)
+    pdf.set_font("Helvetica", style="B", size=20)
+    pdf.multi_cell(largura_texto, 9, perfil.name or "Sem nome", align="L")
+
+    if perfil.professional_title or perfil.company:
+
+        subtitulo = " · ".join(filter(None, [perfil.professional_title, perfil.company]))
+        pdf.set_x(x_texto)
+        pdf.set_font("Helvetica", size=12)
+        pdf.set_text_color(*_PDF_COR_CINZA)
+        pdf.multi_cell(largura_texto, 6, subtitulo, align="L")
+
+    pdf.set_y(max(pdf.get_y(), 16 + largura_foto) + 8)
+
+    pdf.set_draw_color(*_PDF_COR_CINZA_CLARO)
+    pdf.line(margem, pdf.get_y(), largura_pagina - margem, pdf.get_y())
+    pdf.ln(8)
+
+    if perfil.bio:
+
+        pdf.set_font("Helvetica", size=11)
+        pdf.set_text_color(*_PDF_COR_NAVY)
+        pdf.multi_cell(largura_util, 6, perfil.bio, align="L")
+        pdf.ln(4)
+
+    def linha_contato(rotulo: str, valor: str):
+        """
+        Desenha "rótulo | valor" numa linha, posicionando cada célula
+        explicitamente (em vez de encadear cell() -> multi_cell() e
+        confiar no avanço automático do cursor do fpdf2, que causava
+        sobreposição/corte quando o valor quebrava em mais de uma linha).
+        """
+
+        if not valor:
+            return
+
+        y_inicio = pdf.get_y()
+
+        pdf.set_xy(margem, y_inicio)
+        pdf.set_font("Helvetica", style="B", size=10)
+        pdf.set_text_color(*_PDF_COR_CINZA)
+        pdf.cell(32, 7, rotulo)
+
+        pdf.set_xy(margem + 32, y_inicio)
+        pdf.set_font("Helvetica", size=11)
+        pdf.set_text_color(*_PDF_COR_NAVY)
+        pdf.multi_cell(largura_util - 32, 7, valor, align="L")
+
+        pdf.set_xy(margem, max(pdf.get_y(), y_inicio + 7))
+
+    linha_contato("WhatsApp", perfil.whatsapp)
+    linha_contato("Telefone", perfil.phone)
+    linha_contato("E-mail", perfil.email)
+    linha_contato("Site", perfil.website)
+    linha_contato("Localização", perfil.google_maps_url)
+
+    if links:
+
+        pdf.ln(2)
+
+        for link in links:
+            linha_contato(link["label"], link["url"])
+
+    if perfil.pix_key:
+
+        pdf.ln(2)
+        rotulo_pix = f"Pix ({perfil.pix_key_type})" if perfil.pix_key_type else "Pix"
+        linha_contato(rotulo_pix, perfil.pix_key)
+
+    # A partir daqui o posicionamento é controlado manualmente (QR Code
+    # e rodapé ficam propositalmente dentro da margem inferior) — sem
+    # desligar a quebra automática, fpdf2 insere uma segunda página só
+    # pra caber o rodapé, mesmo cabendo tudo numa página só.
+    pdf.set_auto_page_break(auto=False)
+
+    # QR Code + link, no rodapé da página
+    tamanho_qr = 32
+    y_qr = pdf.h - pdf.b_margin - tamanho_qr - 12
+
+    if pdf.get_y() < y_qr:
+        pdf.set_y(y_qr)
+    else:
+        pdf.add_page()
+        pdf.set_y(pdf.h - pdf.b_margin - tamanho_qr - 12)
+
+    y_qr = pdf.get_y()
+
+    pdf.image(io.BytesIO(qr_bytes), x=margem, y=y_qr, w=tamanho_qr, h=tamanho_qr)
+
+    pdf.set_xy(margem + tamanho_qr + 8, y_qr + 6)
+    pdf.set_font("Helvetica", style="B", size=11)
+    pdf.set_text_color(*_PDF_COR_NAVY)
+    pdf.multi_cell(largura_util - tamanho_qr - 8, 6, "Aponte a câmera para abrir o cartão digital", align="L")
+
+    pdf.set_xy(margem + tamanho_qr + 8, pdf.get_y() + 2)
+    pdf.set_font("Helvetica", size=9)
+    pdf.set_text_color(*_PDF_COR_CINZA)
+    pdf.multi_cell(largura_util - tamanho_qr - 8, 5, url_publica, align="L")
+
+    pdf.set_y(-15)
+    pdf.set_font("Helvetica", size=8)
+    pdf.set_text_color(*_PDF_COR_CINZA)
+    pdf.cell(largura_util, 5, "DNA CONNECT", align="C")
+
+    return bytes(pdf.output())
+
+
+def gerar_pdf_cartao_visita(card_code: str):
+    """
+    Gera o PDF do cartão de visita digital (em memória, nunca
+    persistido em disco), pronto para download/anexo. Mesmas condições
+    do vCard e do QR offline: só existe para cartões em modo
+    business_card com perfil preenchido. Reaproveita o QR Code "online"
+    já existente (aponta para a página pública, igual ao gravado no
+    NFC) e a foto de perfil já enviada, se houver.
+    """
+
+    repo = CardRepository()
+
+    try:
+
+        card = repo.buscar_por_codigo(card_code)
+
+    finally:
+
+        repo.fechar()
+
+    if not card or card.mode != "business_card":
+        return None
+
+    perfil_repo = CardBusinessProfileRepository()
+
+    try:
+
+        perfil = perfil_repo.buscar_por_card_id(card.id)
+
+    finally:
+
+        perfil_repo.fechar()
+
+    if not perfil:
+        return None
+
+    url_publica = construir_url_publica_cartao(card.code)
+    qr_bytes = _renderizar_qr_code(url_publica)
+
+    foto = obter_foto_cartao_visita(card_code)
+    foto_bytes = foto["dados"] if foto else None
+
+    links = listar_links_cartao_visita(card.id)
+
+    return _montar_pdf_cartao_visita(perfil, url_publica, qr_bytes, foto_bytes, links)

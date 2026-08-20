@@ -1,6 +1,7 @@
 import io
 import re
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse, Response
@@ -25,6 +26,8 @@ from app.dna_connect.cards.service import (
     gerar_qr_code_cartao,
     obter_vcard_cartao_visita,
     gerar_qr_code_offline_cartao,
+    gerar_pdf_cartao_visita,
+    salvar_links_cartao_visita,
     ativar_cartao,
     atualizar_link_cartao,
     listar_cartoes_por_owner,
@@ -201,23 +204,6 @@ def _url_segura(valor):
     return None
 
 
-def _url_rede_social(base_url: str, valor):
-    """
-    Se o valor já for uma URL http/https, usa como está. Caso contrário,
-    trata como um @handle e monta a URL do perfil na rede social.
-    """
-
-    if not valor:
-        return None
-
-    valor = valor.strip()
-
-    if valor.startswith(("http://", "https://")):
-        return valor
-
-    return f"{base_url}{valor.lstrip('@')}"
-
-
 def _link_whatsapp(valor):
 
     if not valor:
@@ -253,10 +239,24 @@ def _link_website(valor):
     return valor if valor.startswith(("http://", "https://")) else f"https://{valor}"
 
 
+def _link_compartilhar_whatsapp(url_cartao: str) -> str:
+    """
+    Monta o link "wa.me" para o próprio dono do cartão compartilhar seu
+    link por WhatsApp — diferente do botão de contato existente
+    (whatsapp_link, onde é o visitante chamando o dono): aqui é o dono
+    enviando o próprio cartão pra alguém. Sem número de destino, o
+    WhatsApp abre o seletor de contato/conversa do usuário.
+    """
+
+    mensagem = f"Confira meu cartão digital DNA Connect: {url_cartao}"
+
+    return f"https://wa.me/?text={quote(mensagem)}"
+
+
 _EMAIL_SIMPLES = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 _CAMPOS_URL_OU_HANDLE = (
-    "instagram", "linkedin", "facebook", "tiktok", "youtube", "website"
+    "website",
 )
 
 
@@ -360,6 +360,65 @@ def _validar_dados_perfil(form):
             erros.append(f"O campo {campo} contém um endereço não permitido.")
 
     return dados, erros
+
+
+_ICONES_LINK_VALIDOS = ("instagram", "linkedin", "facebook", "tiktok", "youtube", "link")
+_LABEL_LINK_TAMANHO_MAXIMO = 40
+
+
+def _validar_links(form):
+    """
+    Extrai e valida a lista de links livres do formulário (Sprint 4 —
+    substitui os antigos campos fixos de Instagram/LinkedIn/Facebook/
+    TikTok/YouTube por uma lista de tamanho arbitrário). Cada link vem
+    como uma linha de 3 campos (link_label[], link_url[], link_icon[])
+    com o mesmo índice — o navegador manda um trio por link adicionado.
+
+    Linhas totalmente vazias são ignoradas (permite "remover" uma linha
+    no navegador só esvaziando os campos, sem precisar reindexar nada).
+    """
+
+    rotulos = form.getlist("link_label[]")
+    urls = form.getlist("link_url[]")
+    icones = form.getlist("link_icon[]")
+
+    links = []
+    erros = []
+
+    for rotulo, url, icone in zip(rotulos, urls, icones):
+
+        rotulo = (rotulo or "").strip()
+        url = (url or "").strip()
+        icone = (icone or "link").strip()
+
+        if not rotulo and not url:
+            continue
+
+        if not rotulo:
+            erros.append("Todo link precisa de um rótulo.")
+            continue
+
+        if len(rotulo) > _LABEL_LINK_TAMANHO_MAXIMO:
+            erros.append(f'O rótulo "{rotulo}" deve ter no máximo {_LABEL_LINK_TAMANHO_MAXIMO} caracteres.')
+            continue
+
+        if not url:
+            erros.append(f'O link "{rotulo}" precisa de uma URL.')
+            continue
+
+        if not _valor_sem_esquema_perigoso(url):
+            erros.append(f'O link "{rotulo}" contém um endereço não permitido.')
+            continue
+
+        if not url.startswith(("http://", "https://")):
+            url = f"https://{url}"
+
+        if icone not in _ICONES_LINK_VALIDOS:
+            icone = "link"
+
+        links.append({"label": rotulo, "url": url, "icon": icone})
+
+    return links, erros
 
 
 class ActivateRequest(BaseModel):
@@ -507,11 +566,7 @@ def card_business_profile(card_code: str, request: Request):
             "whatsapp_link": _link_whatsapp(perfil.whatsapp),
             "telefone_link": _link_telefone(perfil.phone),
             "email_link": _link_email(perfil.email),
-            "instagram_link": _url_rede_social("https://instagram.com/", perfil.instagram),
-            "linkedin_link": _url_rede_social("https://linkedin.com/in/", perfil.linkedin),
-            "facebook_link": _url_rede_social("https://facebook.com/", perfil.facebook),
-            "tiktok_link": _url_rede_social("https://tiktok.com/@", perfil.tiktok),
-            "youtube_link": _url_rede_social("https://youtube.com/", perfil.youtube),
+            "links": resultado["links"],
             "website_link": _link_website(perfil.website),
             "google_maps_link": _url_segura(perfil.google_maps_url),
             "pix_key": perfil.pix_key,
@@ -579,6 +634,30 @@ def card_business_vcard(card_code: str):
         media_type="text/vcard",
         headers={
             "Content-Disposition": f'attachment; filename="{card_code}.vcf"'
+        }
+    )
+
+
+@router.get("/c/{card_code}/pdf")
+def card_business_pdf(card_code: str):
+    """
+    Serve o PDF do cartão de visita digital, para download/anexo em
+    e-mail ou WhatsApp. Rota pública, sem autenticação — mesmo nível de
+    exposição do restante do perfil. 404 nas mesmas condições do
+    vCard/QR offline (cartão inexistente, modo custom_link, ou sem
+    perfil preenchido).
+    """
+
+    pdf_bytes = gerar_pdf_cartao_visita(card_code)
+
+    if not pdf_bytes:
+        raise HTTPException(status_code=404, detail="Cartão de visita não encontrado.")
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{card_code}.pdf"'
         }
     )
 
@@ -885,6 +964,7 @@ def _renderizar_pagina_edicao(
     erro=None,
     sucesso=None,
     dados_pendentes=None,
+    links_pendentes=None,
     status_code=200
 ):
     """
@@ -909,11 +989,13 @@ def _renderizar_pagina_edicao(
     cartao = resultado["card"]
     perfil_real = resultado["profile"]
     perfil = dados_pendentes if dados_pendentes is not None else perfil_real
+    links = links_pendentes if links_pendentes is not None else resultado["links"]
     # foto_atual/fundo_imagem_atual refletem sempre o que está de fato
     # salvo no banco, nunca o dict de dados pendentes (que não inclui
     # essas imagens — ver save_business_profile)
     foto_atual = _url_segura(perfil_real.profile_photo) if perfil_real else None
     fundo_imagem_atual = _url_segura(perfil_real.background_image) if perfil_real else None
+    url_cartao_fisico = construir_url_publica_cartao(cartao.code)
 
     return templates.TemplateResponse(
         request=request,
@@ -921,11 +1003,14 @@ def _renderizar_pagina_edicao(
         context={
             "cartao": cartao,
             "perfil": perfil,
+            "links": links,
             "foto_atual": foto_atual,
             "fundo_imagem_atual": fundo_imagem_atual,
-            "url_cartao_fisico": construir_url_publica_cartao(cartao.code),
+            "url_cartao_fisico": url_cartao_fisico,
             "url_qr_cartao": f"/cards/{cartao.code}/qr",
             "url_qr_offline_cartao": f"/cards/{cartao.code}/qr-offline",
+            "url_compartilhar_whatsapp": _link_compartilhar_whatsapp(url_cartao_fisico),
+            "url_pdf_cartao": f"/c/{cartao.code}/pdf",
             "erro": erro,
             "sucesso": sucesso
         },
@@ -1066,6 +1151,8 @@ async def save_business_profile(
 
     form = await request.form()
     dados, erros = _validar_dados_perfil(form)
+    links, erros_links = _validar_links(form)
+    erros.extend(erros_links)
 
     conteudo_foto = None
     content_type_foto = None
@@ -1101,6 +1188,7 @@ async def save_business_profile(
             current_user,
             erro=" ".join(erros),
             dados_pendentes=dados,
+            links_pendentes=links,
             status_code=400
         )
 
@@ -1133,6 +1221,8 @@ async def save_business_profile(
             dados_binarios=conteudo_fundo,
             content_type=content_type_fundo
         )
+
+    salvar_links_cartao_visita(card_code, owner_id=current_user.id, links=links)
 
     definir_modo_cartao(card_code, owner_id=current_user.id, mode="business_card")
 

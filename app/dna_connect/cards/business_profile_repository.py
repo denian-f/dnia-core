@@ -6,6 +6,15 @@ from app.dna_connect.cards.models import CardBusinessProfile
 # métodos dedicados de foto (salvar_foto/remover_foto), nunca pelo
 # upsert genérico de texto — assim, salvar os demais campos do perfil
 # (Sprint 26) nunca sobrescreve/apaga a foto enviada (Sprint 28).
+#
+# instagram/linkedin/facebook/tiktok/youtube também ficam FORA de
+# propósito (Sprint 4 do roadmap Airgo): essas colunas ainda existem
+# no banco (nunca foram apagadas, sem risco de perda de dado), mas
+# desde a lista livre de links (tabela card_links) o app não lê nem
+# escreve mais nelas — se estivessem aqui, o upsert genérico as
+# sobrescreveria com NULL no primeiro salvamento após essa mudança,
+# apagando dados de cartões antigos que nunca chegaram a ser migrados
+# manualmente. Ver CardLinksRepository.migrar_redes_legadas.
 CAMPOS_PERFIL = [
     "name",
     "professional_title",
@@ -13,11 +22,6 @@ CAMPOS_PERFIL = [
     "whatsapp",
     "phone",
     "email",
-    "instagram",
-    "linkedin",
-    "facebook",
-    "tiktok",
-    "youtube",
     "website",
     "pix_key",
     "pix_key_type",
