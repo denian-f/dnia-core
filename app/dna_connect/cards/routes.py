@@ -3,13 +3,19 @@ import re
 from pathlib import Path
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from PIL import Image
 from pydantic import BaseModel
 from starlette.datastructures import UploadFile
 
+from app.dna_connect.analytics.routes import (
+    obter_ip_cliente,
+    obter_ou_criar_visitor_id,
+    definir_cookie_visitor
+)
+from app.dna_connect.analytics.service import registrar_evento_analytics
 from app.dna_connect.cards.service import (
     resolver_cartao_publico,
     resolver_cartao_visita,
@@ -53,6 +59,33 @@ templates = Jinja2Templates(
         str(Path(__file__).resolve().parent.parent / "dashboard" / "templates")
     ]
 )
+
+
+def _rastrear_evento_cartao(background_tasks, request, response, card_code, event_type, metadata=None):
+    """
+    Ponte entre as rotas públicas do cartão e o Analytics (Sprint
+    Analytics) — lê/gera o visitor_id, agenda a gravação numa
+    BackgroundTask e define o cookie na resposta quando necessário.
+    Falhas do Analytics nunca devem derrubar a rota pública (ver
+    registrar_evento_analytics/_gravar_evento).
+    """
+
+    visitor_id, precisa_definir_cookie = obter_ou_criar_visitor_id(request)
+
+    registrar_evento_analytics(
+        background_tasks=background_tasks,
+        card_code=card_code,
+        event_type=event_type,
+        visitor_id=visitor_id,
+        ip=obter_ip_cliente(request),
+        user_agent=request.headers.get("user-agent"),
+        referer=request.headers.get("referer"),
+        src_param=request.query_params.get("src"),
+        metadata=metadata
+    )
+
+    if precisa_definir_cookie:
+        definir_cookie_visitor(response, visitor_id)
 
 
 def _validar_target_url(target_url: str) -> bool:
@@ -626,16 +659,21 @@ class UpdateCardRequest(BaseModel):
 
 
 @router.get("/c/{card_code}")
-def redirect_card(card_code: str, request: Request):
+def redirect_card(card_code: str, request: Request, background_tasks: BackgroundTasks, src: str = None):
     """
     Resolve o acesso público de um cartão NFC/QR Code pelo código —
     mesmo endereço físico impresso/gravado para os dois modos.
 
     - Não existe: 404.
     - mode=business_card: redireciona (307) para /c/{code}/cartao-visita,
-      já que o NFC/QR físico só conhece este endereço.
-    - custom_link, mas ainda não está configurado: página pública informativa.
-    - custom_link e está configurado: redireciona (307) para o target_url.
+      já que o NFC/QR físico só conhece este endereço — o ?src= é
+      encaminhado para lá, que é quem de fato registra o page_view
+      (evita contar a mesma visita duas vezes).
+    - custom_link, mas ainda não está configurado: página pública
+      informativa (conta como page_view aqui mesmo).
+    - custom_link e está configurado: redireciona (307) para o
+      target_url (conta como page_view aqui; o ?src= não é
+      encaminhado para o site externo, é só para uso interno).
     """
 
     resultado = resolver_cartao_publico(card_code)
@@ -644,21 +682,42 @@ def redirect_card(card_code: str, request: Request):
         raise HTTPException(status_code=404, detail="Cartão não encontrado.")
 
     if resultado["status"] == "business_card":
-        return RedirectResponse(url=f"/c/{card_code}/cartao-visita", status_code=307)
+
+        destino = f"/c/{card_code}/cartao-visita"
+
+        if src:
+            destino += f"?src={quote(src)}"
+
+        return RedirectResponse(url=destino, status_code=307)
 
     if resultado["status"] == "unconfigured":
 
-        return templates.TemplateResponse(
+        resposta = templates.TemplateResponse(
             request=request,
             name="card_unconfigured.html",
             context={}
         )
 
-    return RedirectResponse(url=resultado["target_url"], status_code=307)
+        _rastrear_evento_cartao(background_tasks, request, resposta, card_code, "page_view")
+
+        return resposta
+
+    resposta = RedirectResponse(url=resultado["target_url"], status_code=307)
+
+    _rastrear_evento_cartao(background_tasks, request, resposta, card_code, "page_view")
+
+    return resposta
 
 
 @router.get("/c/{card_code}/cartao-visita")
-def card_business_profile(card_code: str, request: Request, lead: str = None, erro_lead: str = None):
+def card_business_profile(
+    card_code: str,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    lead: str = None,
+    erro_lead: str = None,
+    src: str = None
+):
     """
     Página pública do cartão de visita digital (mode=business_card).
 
@@ -692,11 +751,15 @@ def card_business_profile(card_code: str, request: Request, lead: str = None, er
 
     if not perfil:
 
-        return templates.TemplateResponse(
+        resposta_pendente = templates.TemplateResponse(
             request=request,
             name="business_card_pending.html",
             context={}
         )
+
+        _rastrear_evento_cartao(background_tasks, request, resposta_pendente, card_code, "page_view")
+
+        return resposta_pendente
 
     tipo_fundo = _tipo_fundo_valido(perfil.background_type)
 
@@ -735,7 +798,7 @@ def card_business_profile(card_code: str, request: Request, lead: str = None, er
 
     cor_destaque = _cor_destaque_valida(perfil.accent_color)
 
-    return templates.TemplateResponse(
+    resposta = templates.TemplateResponse(
         request=request,
         name="business_card.html",
         context={
@@ -767,15 +830,24 @@ def card_business_profile(card_code: str, request: Request, lead: str = None, er
         }
     )
 
+    _rastrear_evento_cartao(background_tasks, request, resposta, card_code, "page_view")
+
+    return resposta
+
 
 @router.post("/c/{card_code}/leads")
-async def submit_lead(card_code: str, request: Request):
+async def submit_lead(card_code: str, request: Request, background_tasks: BackgroundTasks):
     """
     Recebe o formulário de contato/lead da página pública (Sprint 7).
     Rota pública, sem autenticação — qualquer visitante pode deixar seu
     contato. Redireciona de volta para a própria página pública, com
     um indicador de sucesso/erro na query string (não há sessão nem
     dado sensível para justificar POST-redirect com corpo).
+
+    O evento lead_form_submit registrado no Analytics (Sprint Analytics)
+    mede só a interação (que um lead foi enviado) — os dados pessoais
+    preenchidos no formulário continuam exclusivamente em card_leads,
+    nunca em analytics_events.
     """
 
     form = await request.form()
@@ -792,7 +864,11 @@ async def submit_lead(card_code: str, request: Request):
     if resultado["status"] == "not_found":
         raise HTTPException(status_code=404, detail="Cartão não encontrado.")
 
-    return RedirectResponse(url=f"/c/{card_code}/cartao-visita?lead=enviado", status_code=302)
+    resposta = RedirectResponse(url=f"/c/{card_code}/cartao-visita?lead=enviado", status_code=302)
+
+    _rastrear_evento_cartao(background_tasks, request, resposta, card_code, "lead_form_submit")
+
+    return resposta
 
 
 @router.get("/c/{card_code}/photo")
@@ -847,7 +923,7 @@ def card_catalog_item_image(card_code: str, item_id: int):
 
 
 @router.get("/c/{card_code}/vcard")
-def card_business_vcard(card_code: str):
+def card_business_vcard(card_code: str, request: Request, background_tasks: BackgroundTasks):
     """
     Serve o vCard do cartão de visita para download ("Salvar contato"
     na página pública) — mesma fonte de dados usada pelo QR Code
@@ -862,13 +938,17 @@ def card_business_vcard(card_code: str):
     if not vcard:
         raise HTTPException(status_code=404, detail="Cartão de visita não encontrado.")
 
-    return Response(
+    resposta = Response(
         content=vcard,
         media_type="text/vcard",
         headers={
             "Content-Disposition": f'attachment; filename="{card_code}.vcf"'
         }
     )
+
+    _rastrear_evento_cartao(background_tasks, request, resposta, card_code, "vcard_download")
+
+    return resposta
 
 
 @router.get("/c/{card_code}/pdf")
@@ -915,7 +995,7 @@ def _valor_pix_da_query(valor_str):
 
 
 @router.get("/c/{card_code}/pix-qr")
-def card_pix_qr(card_code: str, valor: str = None):
+def card_pix_qr(card_code: str, request: Request, background_tasks: BackgroundTasks, valor: str = None):
     """
     Gera o QR Code de cobrança Pix (padrão BR Code do Banco Central) do
     cartão, com o valor informado pelo pagador no momento (opcional).
@@ -929,7 +1009,11 @@ def card_pix_qr(card_code: str, valor: str = None):
     if imagem_png is None:
         raise HTTPException(status_code=404, detail="Cobrança Pix não disponível para este cartão.")
 
-    return Response(content=imagem_png, media_type="image/png")
+    resposta = Response(content=imagem_png, media_type="image/png")
+
+    _rastrear_evento_cartao(background_tasks, request, resposta, card_code, "pix_qr_generate")
+
+    return resposta
 
 
 @router.get("/c/{card_code}/pix-copia-e-cola")

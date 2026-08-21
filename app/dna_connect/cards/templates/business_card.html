@@ -30,16 +30,16 @@
 
         <section class="bc-contacts">
             {% if whatsapp_link %}
-            <a class="bc-btn bc-btn-primary" href="{{ whatsapp_link }}" target="_blank" rel="noopener noreferrer">Chamar no WhatsApp</a>
+            <a class="bc-btn bc-btn-primary" href="{{ whatsapp_link }}" target="_blank" rel="noopener noreferrer" data-track-event="whatsapp_click">Chamar no WhatsApp</a>
             {% endif %}
             {% if telefone_link %}
-            <a class="bc-btn" href="{{ telefone_link }}">Ligar</a>
+            <a class="bc-btn" href="{{ telefone_link }}" data-track-event="phone_click">Ligar</a>
             {% endif %}
             {% if email_link %}
-            <a class="bc-btn" href="{{ email_link }}">Enviar e-mail</a>
+            <a class="bc-btn" href="{{ email_link }}" data-track-event="email_click">Enviar e-mail</a>
             {% endif %}
             {% if google_maps_link %}
-            <a class="bc-btn" href="{{ google_maps_link }}" target="_blank" rel="noopener noreferrer">Ver localização</a>
+            <a class="bc-btn" href="{{ google_maps_link }}" target="_blank" rel="noopener noreferrer" data-track-event="google_maps_click">Ver localização</a>
             {% endif %}
             <a class="bc-btn" href="/c/{{ card_code }}/vcard">Salvar contato</a>
         </section>
@@ -48,7 +48,7 @@
         <section class="bc-social">
 
             {% for link in links %}
-            <a class="bc-social-icon" href="{{ link.url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ link.label }}">
+            <a class="bc-social-icon" href="{{ link.url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ link.label }}" data-track-event="social_link_click" data-track-label="{{ link.label }}" data-track-icon="{{ link.icon }}">
                 {% if link.icon == "instagram" %}
                 <svg viewBox="0 0 24 24"><path d="M12 2c2.7 0 3 .01 4.1.06 1.1.05 1.85.23 2.5.48.68.27 1.26.62 1.83 1.19.57.57.92 1.15 1.19 1.83.25.65.43 1.4.48 2.5.05 1.1.06 1.4.06 4.1s-.01 3-.06 4.1c-.05 1.1-.23 1.85-.48 2.5a4.9 4.9 0 0 1-1.19 1.83 4.9 4.9 0 0 1-1.83 1.19c-.65.25-1.4.43-2.5.48-1.1.05-1.4.06-4.1.06s-3-.01-4.1-.06c-1.1-.05-1.85-.23-2.5-.48a4.9 4.9 0 0 1-1.83-1.19 4.9 4.9 0 0 1-1.19-1.83c-.25-.65-.43-1.4-.48-2.5C2.01 15 2 14.7 2 12s.01-3 .06-4.1c.05-1.1.23-1.85.48-2.5.27-.68.62-1.26 1.19-1.83A4.9 4.9 0 0 1 5.56 2.4c.65-.25 1.4-.43 2.5-.48C9.16 2.01 9.46 2 12 2zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.2-8.4a1.17 1.17 0 1 1 0-2.34 1.17 1.17 0 0 1 0 2.34z"/></svg>
                 {% elif link.icon == "linkedin" %}
@@ -66,7 +66,7 @@
             {% endfor %}
 
             {% if website_link %}
-            <a class="bc-social-icon" href="{{ website_link }}" target="_blank" rel="noopener noreferrer" aria-label="Website">
+            <a class="bc-social-icon" href="{{ website_link }}" target="_blank" rel="noopener noreferrer" aria-label="Website" data-track-event="website_click">
                 <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm6.93 6H15.9a15.7 15.7 0 0 0-1.28-4.24A8.03 8.03 0 0 1 18.93 8zM12 4.06c.8 1.1 1.55 2.5 2 3.94H10c.45-1.44 1.2-2.84 2-3.94zM4.26 14a8.1 8.1 0 0 1 0-4h3.4a17.6 17.6 0 0 0 0 4h-3.4zm.81 2h3.03c.32 1.6.85 3 1.42 4.24A8.03 8.03 0 0 1 5.07 16zm3.03-8H5.07a8.03 8.03 0 0 1 4.45-4.24C9 5 8.47 6.4 8.15 8zM10 16h4c-.45 1.44-1.2 2.84-2 3.94A15.9 15.9 0 0 1 10 16zm-.34-2a15.6 15.6 0 0 1 0-4h4.68a15.6 15.6 0 0 1 0 4H9.66zm4.96 6.24c.57-1.24 1.1-2.64 1.42-4.24h3.03a8.03 8.03 0 0 1-4.45 4.24zM16.34 14a17.6 17.6 0 0 0 0-4h3.4a8.1 8.1 0 0 1 0 4h-3.4z"/></svg>
             </a>
             {% endif %}
@@ -92,7 +92,7 @@
                         <span class="bc-catalog-item-price">{{ item.price }}</span>
                         {% endif %}
                         {% if item.action_url %}
-                        <a class="bc-catalog-item-btn" href="{{ item.action_url }}" target="_blank" rel="noopener noreferrer">{{ item.action_label or "Ver mais" }}</a>
+                        <a class="bc-catalog-item-btn" href="{{ item.action_url }}" target="_blank" rel="noopener noreferrer" data-track-event="catalog_item_click" data-track-title="{{ item.title }}">{{ item.action_label or "Ver mais" }}</a>
                         {% endif %}
                     </div>
                 </div>
@@ -160,6 +160,36 @@
 
     </main>
 
+    <script>
+        function dnaConnectTrack(eventType, metadata) {
+            try {
+                var payload = JSON.stringify({event_type: eventType, metadata: metadata || null});
+                var url = "/c/{{ card_code }}/track";
+                if (navigator.sendBeacon) {
+                    navigator.sendBeacon(url, new Blob([payload], {type: "application/json"}));
+                } else {
+                    fetch(url, {method: "POST", body: payload, headers: {"Content-Type": "application/json"}, keepalive: true});
+                }
+            } catch (e) {}
+        }
+
+        document.addEventListener("click", function (ev) {
+            var el = ev.target.closest("[data-track-event]");
+            if (!el) return;
+
+            var eventType = el.dataset.trackEvent;
+            var metadata = null;
+
+            if (eventType === "social_link_click") {
+                metadata = {label: el.dataset.trackLabel || null, icon: el.dataset.trackIcon || null};
+            } else if (eventType === "catalog_item_click") {
+                metadata = {title: el.dataset.trackTitle || null};
+            }
+
+            dnaConnectTrack(eventType, metadata);
+        });
+    </script>
+
     {% if pix_key %}
     <script>
         function dnaConnectCopiarPix() {
@@ -167,6 +197,7 @@
             var feedback = document.getElementById("bc-pix-feedback");
             navigator.clipboard.writeText(valor).then(function () {
                 feedback.textContent = "Chave copiada!";
+                dnaConnectTrack("pix_key_copy");
             }).catch(function () {
                 feedback.textContent = "Não foi possível copiar automaticamente.";
             });
@@ -201,6 +232,7 @@
             var feedback = document.getElementById("bc-pix-copia-cola-feedback");
             navigator.clipboard.writeText(valor).then(function () {
                 feedback.textContent = "Código copiado!";
+                dnaConnectTrack("pix_copia_cola_copy");
             }).catch(function () {
                 feedback.textContent = "Não foi possível copiar automaticamente.";
             });

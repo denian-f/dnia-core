@@ -301,6 +301,21 @@ def construir_url_publica_cartao(card_code: str) -> str:
     return f"{email_config.CARD_BASE_URL}/c/{card_code}"
 
 
+def construir_url_publica_cartao_qr(card_code: str) -> str:
+    """
+    Mesma URL pública permanente do cartão, com ?src=qr — usada apenas
+    ao gerar o QR Code "online" (gerar_qr_code_cartao), para o
+    Analytics (Sprint Analytics) distinguir acessos via QR Code dos
+    demais. Não afeta a URL gravada fisicamente no NFC
+    (construir_url_publica_cartao continua sendo usada para isso, já
+    que não há como alterar o que já está gravado em chips físicos
+    existentes) nem o QR Code offline (que codifica um vCard, não uma
+    URL).
+    """
+
+    return f"{construir_url_publica_cartao(card_code)}?src=qr"
+
+
 def definir_modo_cartao(card_code: str, owner_id: int, mode: str):
     """
     Define o modo de utilização do cartão (custom_link ou business_card).
@@ -1064,7 +1079,7 @@ def gerar_qr_code_cartao(card_code: str):
     if not card:
         return None
 
-    url = construir_url_publica_cartao(card.code)
+    url = construir_url_publica_cartao_qr(card.code)
 
     return _renderizar_qr_code(url)
 

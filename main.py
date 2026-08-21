@@ -13,6 +13,8 @@ from app.dna_connect.dashboard.routes import router as dashboard_router
 from app.dna_connect.web.routes import router as web_router
 from app.dna_connect.admin.routes import router as admin_router
 from app.dna_connect.admin.service import bootstrap_admin
+from app.dna_connect.analytics.routes import router as analytics_router
+from app.dna_connect.analytics.service import init_analytics_db
 from app.dna_connect.auth.dependencies import get_optional_user
 
 app = FastAPI(
@@ -26,6 +28,7 @@ app.include_router(users_router)
 app.include_router(dashboard_router)
 app.include_router(web_router)
 app.include_router(admin_router)
+app.include_router(analytics_router)
 
 DASHBOARD_STATIC_DIR = (
     Path(__file__).resolve().parent
@@ -82,8 +85,20 @@ app.mount(
     name="admin_static"
 )
 
+ANALYTICS_STATIC_DIR = (
+    Path(__file__).resolve().parent
+    / "app" / "dna_connect" / "analytics" / "static"
+)
+
+app.mount(
+    "/analytics/static",
+    StaticFiles(directory=str(ANALYTICS_STATIC_DIR)),
+    name="analytics_static"
+)
+
 init_users_db()
 init_cards_db()
+init_analytics_db()
 bootstrap_admin()
 
 @app.get("/")

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - DNA Connect</title>
+    <link rel="stylesheet" href="/dashboard/static/css/tokens.css">
+    <link rel="stylesheet" href="/dashboard/static/css/nav.css">
+    <link rel="stylesheet" href="/dashboard/static/css/dashboard.css">
+    <link rel="stylesheet" href="/analytics/static/css/analytics.css">
+</head>
+<body class="has-sidebar">
+
+    {% include "_nav.html" %}
+
+    <div class="app-shell-main">
+        <main class="app-content">
+
+        <section class="dashboard-header">
+            <div class="dashboard-welcome">
+                <h2>Analytics</h2>
+                <p class="dashboard-email">
+                    {{ periodo_nome }}
+                    &middot;
+                    {% if card_code_selecionado %}{{ card_code_selecionado }}{% else %}Todos os cartões{% endif %}
+                </p>
+            </div>
+
+            {% if cartoes %}
+            <form class="az-filters" method="get" action="/analytics">
+                <label class="az-filter">
+                    <span>Cartão</span>
+                    <select name="card" onchange="this.form.submit()">
+                        <option value="">Todos os cartões</option>
+                        {% for c in cartoes %}
+                        <option value="{{ c.code }}" {% if c.code == card_code_selecionado %}selected{% endif %}>{{ c.code }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="az-filter">
+                    <span>Período</span>
+                    <select name="periodo" onchange="this.form.submit()">
+                        <option value="hoje" {% if periodo == "hoje" %}selected{% endif %}>Hoje</option>
+                        <option value="7d" {% if periodo == "7d" %}selected{% endif %}>Últimos 7 dias</option>
+                        <option value="30d" {% if periodo == "30d" %}selected{% endif %}>Últimos 30 dias</option>
+                        <option value="90d" {% if periodo == "90d" %}selected{% endif %}>Últimos 90 dias</option>
+                    </select>
+                </label>
+            </form>
+            {% endif %}
+        </section>
+
+        {% if not cartoes %}
+
+        <section class="dashboard-cards">
+            <p class="cards-empty" style="padding: 32px 20px;">
+                Você ainda não tem nenhum cartão ativado. Ative um cartão para começar a ver estatísticas de acesso aqui.
+            </p>
+        </section>
+
+        {% else %}
+
+        <section class="az-summary">
+            <div class="summary-card">
+                <span class="summary-label">Visualizações</span>
+                <span class="summary-value">{{ total_visualizacoes }}</span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-label">Visitantes (estimativa)</span>
+                <span class="summary-value">{{ visitantes_unicos }}</span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-label">Interações</span>
+                <span class="summary-value">{{ total_interacoes }}</span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-label">Taxa de interação</span>
+                <span class="summary-value">{{ taxa_interacao }}%</span>
+            </div>
+        </section>
+
+        {% if not tem_dados %}
+        <p class="az-empty-notice">Nenhum acesso registrado neste período ainda.</p>
+        {% endif %}
+
+        {% if insights %}
+        <section class="az-insights">
+            {% for texto in insights %}
+            <div class="az-insight">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+                <span>{{ texto }}</span>
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        <div class="az-grid-2">
+
+            <section class="dashboard-cards">
+                <h3 class="dashboard-cards-title">Visualizações ao longo do tempo</h3>
+                <div class="az-chart-wrap">
+                    <svg class="az-chart-svg" viewBox="0 0 100 110" preserveAspectRatio="none">
+                        {% set valores_dia = evolucao_diaria | map(attribute='total') | list %}
+                        {% set maximo_dia = (valores_dia | max) if valores_dia else 0 %}
+                        {% set n_dias = evolucao_diaria | length %}
+                        {% set largura_barra_dia = (100 / n_dias) if n_dias else 100 %}
+                        {% for item in evolucao_diaria %}
+                        {% set altura_barra = ((item.total / maximo_dia) * 104) if maximo_dia else 0 %}
+                        <rect
+                            x="{{ (loop.index0 * largura_barra_dia + largura_barra_dia * 0.15) | round(2) }}"
+                            y="{{ (110 - altura_barra) | round(2) }}"
+                            width="{{ (largura_barra_dia * 0.7) | round(2) }}"
+                            height="{{ altura_barra | round(2) }}"
+                            rx="0.6"
+                            fill="var(--dc-brand)"
+                        ><title>{{ item.data }}: {{ item.total }}</title></rect>
+                        {% endfor %}
+                    </svg>
+                </div>
+                {% if evolucao_diaria %}
+                <div class="az-chart-ticks">
+                    <span>{{ evolucao_diaria[0].data[8:10] }}/{{ evolucao_diaria[0].data[5:7] }}</span>
+                    <span>{{ evolucao_diaria[(evolucao_diaria|length - 1) // 2].data[8:10] }}/{{ evolucao_diaria[(evolucao_diaria|length - 1) // 2].data[5:7] }}</span>
+                    <span>{{ evolucao_diaria[-1].data[8:10] }}/{{ evolucao_diaria[-1].data[5:7] }}</span>
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="dashboard-cards">
+                <h3 class="dashboard-cards-title">Por hora do dia</h3>
+                <div class="az-chart-wrap">
+                    <svg class="az-chart-svg" viewBox="0 0 100 110" preserveAspectRatio="none">
+                        {% set valores_hora = distribuicao_horaria | map(attribute='total') | list %}
+                        {% set maximo_hora = (valores_hora | max) if valores_hora else 0 %}
+                        {% set largura_barra_hora = 100 / 24 %}
+                        {% for item in distribuicao_horaria %}
+                        {% set altura_barra = ((item.total / maximo_hora) * 104) if maximo_hora else 0 %}
+                        <rect
+                            x="{{ (loop.index0 * largura_barra_hora + largura_barra_hora * 0.15) | round(2) }}"
+                            y="{{ (110 - altura_barra) | round(2) }}"
+                            width="{{ (largura_barra_hora * 0.7) | round(2) }}"
+                            height="{{ altura_barra | round(2) }}"
+                            rx="0.6"
+                            fill="var(--dc-brand)"
+                        ><title>{{ item.hora }}h: {{ item.total }}</title></rect>
+                        {% endfor %}
+                    </svg>
+                </div>
+                <div class="az-chart-ticks">
+                    <span>0h</span>
+                    <span>6h</span>
+                    <span>12h</span>
+                    <span>18h</span>
+                    <span>23h</span>
+                </div>
+            </section>
+
+        </div>
+
+        <div class="az-grid-2">
+
+            <section class="dashboard-cards">
+                <h3 class="dashboard-cards-title">Principais interações</h3>
+                {% if interacoes_detalhadas %}
+                <div class="az-bar-list">
+                    {% set maximo_int = interacoes_detalhadas[0][1] %}
+                    {% for rotulo, total in interacoes_detalhadas %}
+                    <div class="az-bar-row">
+                        <span class="az-bar-label">{{ rotulo }}</span>
+                        <div class="az-bar-track">
+                            <div class="az-bar-fill" style="width: {{ (total / maximo_int * 100) if maximo_int else 0 }}%;"></div>
+                        </div>
+                        <span class="az-bar-value">{{ total }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="cards-empty" style="padding: 24px 20px;">Nenhuma interação registrada ainda.</p>
+                {% endif %}
+            </section>
+
+            <section class="dashboard-cards">
+                <h3 class="dashboard-cards-title">Dispositivos</h3>
+                {% if dispositivos %}
+                <div class="az-bar-list">
+                    {% for d in dispositivos %}
+                    <div class="az-bar-row">
+                        <span class="az-bar-label">{{ d.nome | capitalize }}</span>
+                        <div class="az-bar-track">
+                            <div class="az-bar-fill" style="width: {{ d.percentual }}%;"></div>
+                        </div>
+                        <span class="az-bar-value">{{ d.percentual }}%</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="cards-empty" style="padding: 24px 20px;">Nenhum dado de dispositivo ainda.</p>
+                {% endif %}
+            </section>
+
+        </div>
+
+        <div class="az-grid-2">
+
+            <section class="dashboard-cards">
+                <h3 class="dashboard-cards-title">Origem dos acessos</h3>
+                {% if origens %}
+                <div class="az-bar-list">
+                    {% set maximo_origem = origens[0][1] %}
+                    {% for rotulo, total in origens %}
+                    <div class="az-bar-row">
+                        <span class="az-bar-label">{{ rotulo }}</span>
+                        <div class="az-bar-track">
+                            <div class="az-bar-fill" style="width: {{ (total / maximo_origem * 100) if maximo_origem else 0 }}%;"></div>
+                        </div>
+                        <span class="az-bar-value">{{ total }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="cards-empty" style="padding: 24px 20px;">Nenhum dado de origem ainda.</p>
+                {% endif %}
+            </section>
+
+            <section class="dashboard-cards">
+                <h3 class="dashboard-cards-title">Localização (por estado)</h3>
+                {% if regioes %}
+                <div class="az-bar-list">
+                    {% for r in regioes %}
+                    <div class="az-bar-row">
+                        <span class="az-bar-label">{{ r.nome }}</span>
+                        <div class="az-bar-track">
+                            <div class="az-bar-fill" style="width: {{ r.percentual }}%;"></div>
+                        </div>
+                        <span class="az-bar-value">{{ r.percentual }}%</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="cards-empty" style="padding: 24px 20px;">
+                    Nenhum dado de localização disponível ainda.
+                </p>
+                {% endif %}
+            </section>
+
+        </div>
+
+        <section class="dashboard-cards">
+            <h3 class="dashboard-cards-title">Mapa de acessos por estado (aproximado)</h3>
+            <div class="az-map-wrap">
+                <div class="az-map-grid" style="grid-template-columns: repeat({{ mapa_grid_cols }}, 1fr); grid-template-rows: repeat({{ mapa_grid_rows }}, auto);">
+                    {% for estado in mapa_estados %}
+                    <div class="az-map-tile" style="grid-column: {{ estado.col + 1 }}; grid-row: {{ estado.row + 1 }};">
+                        <div class="az-map-tile-square" style="background-color: rgba(8, 94, 254, {{ estado.alpha }});" title="{{ estado.nome }}: {{ estado.total }} acesso{{ 's' if estado.total != 1 else '' }}"></div>
+                        <span class="az-map-tile-label">{{ estado.uf }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <p class="az-map-caption">Posicionamento aproximado (esquemático), não é um contorno geográfico exato. Localização estimada por IP, aproximada por estado — nunca por endereço ou coordenada exata.</p>
+        </section>
+
+        {% endif %}
+
+        </main>
+    </div>
+
+</body>
+</html>
